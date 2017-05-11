@@ -15,9 +15,108 @@ namespace DisplayTask {
   int graphHeight = DISPLAY_HEIGHT * 2 / 3;
   int debugHeight = DISPLAY_HEIGHT - graphHeight;
 
-  Window graphWindow( 0, DISPLAY_WIDTH, 0, graphHeight );
-  Window debugWindow( 0, DISPLAY_WIDTH, graphHeight, DISPLAY_HEIGHT );
+  GraphDisplay graphDisplay( 0, DISPLAY_WIDTH, 0, graphHeight );
+  TextDisplay  debugDisplay( 0, DISPLAY_WIDTH, graphHeight, DISPLAY_HEIGHT );
 
+  void GraphDisplay::Plot::shift( void ) {
+    if (type == DataType::Integer) {
+      for (int i=0; i<MAX_PLOT_DATA_LEN-1; i++)
+        data_i[i] = data_i[i + 1];
+    }
+    else if (type == DataType::Float) {
+      for (int i=0; i<MAX_PLOT_DATA_LEN-1; i++)
+        data_f[i] = data_f[i + 1];
+    }
+  }
+
+  void GraphDisplay::drawPlot( GraphDisplay::Plot* plot ) {
+    if (plot->type == Plot::DataType::Integer) {
+      for (int i=1; i<MAX_PLOT_DATA_LEN; i++) {
+        draw_line(
+          { (uint16_t) (left+((i-1)*right)/MAX_PLOT_DATA_LEN),
+           (uint16_t) (bottom-(plot->data_i[i-1]*(bottom-top))/plot->range_i) },
+          { (uint16_t) (left+(i*right)/MAX_PLOT_DATA_LEN),
+           (uint16_t) (bottom-(plot->data_i[i]*(bottom-top))/plot->range_i) },
+          plot->color);
+      }
+    }
+    else if (plot->type == Plot::DataType::Float) {
+      for (int i=1; i<MAX_PLOT_DATA_LEN; i++) {
+        draw_line( 
+          { (uint16_t) (left+((i-1)*(right-left))/MAX_PLOT_DATA_LEN),
+           (uint16_t) (top +(plot->data_f[i-1]*(bottom-top))/plot->range_f) },
+          { (uint16_t) (left+(i*(right-left))/MAX_PLOT_DATA_LEN),
+           (uint16_t) (top +(plot->data_f[i]*(bottom-top))/plot->range_f) },
+          plot->color);
+      }
+    }
+  }
+
+  void GraphDisplay::shiftPlots( void ) {
+    for (int i=0; i<_numPlots; i++) {
+      _plots[i].shift();
+    }
+  }
+
+  void GraphDisplay::drawPlots( void ) {
+    for (int i=0; i<_numPlots; i++) {
+      drawPlot(&_plots[i]);
+    }
+  }
+
+  void GraphDisplay::addIntData( const char *plotName, int newData ) {
+  }
+
+  void GraphDisplay::addFloatData( const char *plotName, float newData ) {
+  }
+
+  bool GraphDisplay::createPlot( const char *plotName, bool overWrite ) {
+    int index = getPlotIndex( plotName );
+    if (index > -1) {
+      if ( overWrite ) {
+        // will overwrite plot that has the same name with empty plot
+        return true;
+      }
+    }
+    else {
+      if ( _numPlots < MAX_PLOTS ) {
+        return true;
+      }
+      else if ( overWrite ) {
+        // will delete the oldest plot by creation time ( _plots[0] )
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void GraphDisplay::removePlot( const char *plotName ) {
+    int index = getPlotIndex( plotName );
+    if (index > -1) {
+      for (int i=index; i<_numPlots; i++)
+        _plots[i] = _plots[i+1];
+    }
+  }
+
+  GraphDisplay::Plot* GraphDisplay::getPlot( const char *plotName ) {
+    int index = getPlotIndex( plotName );
+    if (index > -1)
+      return &_plots[index];
+    else
+      return nullptr;
+  }
+
+  int GraphDisplay::getPlotIndex( const char *plotName ) {
+    for (int i=0; i<_numPlots; i++) {
+      if (!strcmp( _plots[i].name, plotName ))
+        return i;
+    }
+    return -1;
+  }
+
+  bool GraphDisplay::hasPlot( const char *plotName ) {
+    return getPlotIndex( plotName ) > -1;
+  }
 
   // Generated state variables
   bool     __change_state__ = false;

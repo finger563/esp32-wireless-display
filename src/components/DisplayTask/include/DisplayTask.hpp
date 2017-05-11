@@ -14,28 +14,80 @@ namespace DisplayTask {
   extern bool       changeState;
 
   class Window {
-  public:
-    Window( void ) : left(0), right(DISPLAY_WIDTH), top(0), bottom(DISPLAY_HEIGHT) {}
+    public:
     Window( int l, int r, int t, int b ) : left(l), right(r), top(t), bottom(b) {}
-    
-    int left;
-    int right;
-    int top;
-    int bottom;
-    
+
     int  width  ( void ) { return (right - left); }
     int  height ( void ) { return (bottom - top); }
     
     void clear  ( void ) { clear_vram( left, top, width(), height() ); }
+    
+    protected:
+    
+    int left   = 0;
+    int right  = DISPLAY_WIDTH;
+    int top    = 0;
+    int bottom = DISPLAY_HEIGHT;
   };
 
   class GraphDisplay : public Window {
     public:
+    GraphDisplay( int l, int r, int t, int b ) : Window(l, r, t, b) {}
+    
+    #define MAX_PLOT_NAME_LEN 15
+    #define MIN_X_SPACING     12
+    #define MAX_PLOT_DATA_LEN (DISPLAY_WIDTH / MIN_X_SPACING)
+    #define MAX_PLOTS         10
+
+    struct Plot {
+      enum class DataType { Invalid, Integer, Float };
+      char     name[ MAX_PLOT_NAME_LEN ];
+      char     color;
+      int      range_i;
+      float    range_f;
+      DataType type;
+      union {
+        int   data_i [ MAX_PLOT_DATA_LEN ];
+        float data_f [ MAX_PLOT_DATA_LEN ];
+      };
+      
+      void shift_i ( int newData );
+      void shift_f ( float newData );
+      void shift   ( void );
+    };
+    
+    void shiftPlots   ( void ); // left shifts each plot by 1 element
+    void drawPlots    ( void );
+    void drawPlot     ( Plot* plot );
+    void addIntData   ( const char *plotName, int newData );
+    void addFloatData ( const char *plotName, float newData );
+    bool createPlot   ( const char *plotName, bool overWrite = false );
+    void removePlot   ( const char *plotName );
+    
+    protected:
+    int      getPlotIndex  ( const char *plotName );
+    Plot*    getPlot       ( const char *plotName );
+    bool     hasPlot       ( const char *plotName );
+    
+    private:
+    Plot _plots[ MAX_PLOTS ];
+    int  _numPlots = 0;
    };
 
-  class TextDisplay {
+  class TextDisplay : public Window {
     public:
+    TextDisplay( int l, int r, int t, int b ) : Window(l, r, t, b) {}
+    
+    #define MAX_NUM_LOGS  3
+    #define MAX_LOG_LEN   10
+    
+    private:
+    char _logData[ MAX_NUM_LOGS ][ MAX_LOG_LEN ];
   };
+
+  extern GraphDisplay graphDisplay;
+  extern TextDisplay  debugDisplay;
+
 
   // Generated task function
   void  taskFunction ( void *pvParameter );

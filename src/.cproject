@@ -70,12 +70,12 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="ESP32_Wirieless_Display.null.836230535" name="ESP32_Wirieless_Display"/>
+		<project id="ESP32_Wireless_Display.null.836230535" name="ESP32_Wireless_Display"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Default">
-			<resource resourceType="PROJECT" workspacePath="/ESP32_Wirieless_Display"/>
+			<resource resourceType="PROJECT" workspacePath="/ESP32_Wireless_Display"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">

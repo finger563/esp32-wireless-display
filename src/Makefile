@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := ESP32_Wirieless_Display
+PROJECT_NAME := ESP32_Wireless_Display
 
 include /home/jeb/esp/esp-idf/make/project.mk
 

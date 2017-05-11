@@ -1,4 +1,4 @@
-ESP32 Wirieless Display
+ESP32 Wireless Display
 =================
 
 This application was generated from WebGME-HFSM, and should be used
