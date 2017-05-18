@@ -8,9 +8,11 @@
 namespace DisplayTask {
 
   // User definitions for the task
-  bool    changeState = false;
+  bool updateDone      = false;
+  bool hasNewPlotData  = false;
+  bool hasNewTextData  = false;
 
-  uint8_t color = 0xFF;
+  uint8_t data[BUF_SIZE];
 
   int graphHeight = DISPLAY_HEIGHT * 2 / 3;
   int debugHeight = DISPLAY_HEIGHT - graphHeight;
@@ -18,43 +20,56 @@ namespace DisplayTask {
   GraphDisplay graphDisplay( 0, DISPLAY_WIDTH, 0, graphHeight );
   TextDisplay  debugDisplay( 0, DISPLAY_WIDTH, graphHeight, DISPLAY_HEIGHT );
 
+  // Graph Display
+
+  void GraphDisplay::Plot::init( const std::string& newName ) {
+    name = newName;
+    color = rand() % 256;
+    range = 1;
+    min = 0;
+    max = 0;
+    memset( data, 0, MAX_PLOT_DATA_LEN );
+  }
+
+  void GraphDisplay::Plot::update( void ) {
+    min = 0;
+    max = 0;
+    for (int i=0; i<MAX_PLOT_DATA_LEN; i++) {
+      if (data[i] > max)
+        max = data[i];
+      else if (data[i] < min)
+        min = data[i];
+    }
+    range = max - min;
+    if (range == 0) range = 1;
+  }
+
+  void GraphDisplay::Plot::shift( int newData ) {
+    shift();
+    data[MAX_PLOT_DATA_LEN - 1] = newData;
+    update();
+  }
+
   void GraphDisplay::Plot::shift( void ) {
-    if (type == DataType::Integer) {
-      for (int i=0; i<MAX_PLOT_DATA_LEN-1; i++)
-        data_i[i] = data_i[i + 1];
-    }
-    else if (type == DataType::Float) {
-      for (int i=0; i<MAX_PLOT_DATA_LEN-1; i++)
-        data_f[i] = data_f[i + 1];
-    }
+    for (int i=0; i<MAX_PLOT_DATA_LEN-1; i++)
+      data[i] = data[i + 1];
   }
 
   void GraphDisplay::drawPlot( GraphDisplay::Plot* plot ) {
-    if (plot->type == Plot::DataType::Integer) {
-      for (int i=1; i<MAX_PLOT_DATA_LEN; i++) {
-        draw_line(
-          { (uint16_t) (left+((i-1)*right)/MAX_PLOT_DATA_LEN),
-           (uint16_t) (bottom-(plot->data_i[i-1]*(bottom-top))/plot->range_i) },
-          { (uint16_t) (left+(i*right)/MAX_PLOT_DATA_LEN),
-           (uint16_t) (bottom-(plot->data_i[i]*(bottom-top))/plot->range_i) },
-          plot->color);
-      }
-    }
-    else if (plot->type == Plot::DataType::Float) {
-      for (int i=1; i<MAX_PLOT_DATA_LEN; i++) {
-        draw_line( 
-          { (uint16_t) (left+((i-1)*(right-left))/MAX_PLOT_DATA_LEN),
-           (uint16_t) (top +(plot->data_f[i-1]*(bottom-top))/plot->range_f) },
-          { (uint16_t) (left+(i*(right-left))/MAX_PLOT_DATA_LEN),
-           (uint16_t) (top +(plot->data_f[i]*(bottom-top))/plot->range_f) },
-          plot->color);
-      }
+    for (int i=1; i<MAX_PLOT_DATA_LEN; i++) {
+      draw_line(
+        { (uint16_t) (left+((i-1)*right)/MAX_PLOT_DATA_LEN),
+         (uint16_t) (bottom-((plot->data[i-1] - plot->min)*(bottom-top))/plot->range) },
+        { (uint16_t) (left+(i*right)/MAX_PLOT_DATA_LEN),
+         (uint16_t) (bottom-((plot->data[i] - plot->min)*(bottom-top))/plot->range) },
+        plot->color);
     }
   }
 
   void GraphDisplay::shiftPlots( void ) {
     for (int i=0; i<_numPlots; i++) {
-      _plots[i].shift();
+      _plots[i].shift( 0 );
+      _plots[i].update();
     }
   }
 
@@ -64,41 +79,51 @@ namespace DisplayTask {
     }
   }
 
-  void GraphDisplay::addIntData( const char *plotName, int newData ) {
+  void GraphDisplay::addData( std::string& plotName, int newData ) {
+    int pi = getPlotIndex( plotName );
+    if ( pi == -1 )
+      pi = createPlot( plotName, true );
+    _plots[pi].shift( newData );
   }
 
-  void GraphDisplay::addFloatData( const char *plotName, float newData ) {
-  }
-
-  bool GraphDisplay::createPlot( const char *plotName, bool overWrite ) {
+  int GraphDisplay::createPlot( std::string& plotName, bool overWrite ) {
     int index = getPlotIndex( plotName );
     if (index > -1) {
       if ( overWrite ) {
         // will overwrite plot that has the same name with empty plot
-        return true;
+        _plots[index].init( plotName );
       }
+      return index;
     }
     else {
       if ( _numPlots < MAX_PLOTS ) {
-        return true;
+        index = _numPlots++;
+        _plots[index].init( plotName );
+        return index;
       }
       else if ( overWrite ) {
-        // will delete the oldest plot by creation time ( _plots[0] )
-        return true;
+        index = 0;
+        _plots[index].init( plotName );
+        return index;
       }
     }
-    return false;
+    return -1;
   }
 
-  void GraphDisplay::removePlot( const char *plotName ) {
+  void GraphDisplay::removePlot( std::string& plotName ) {
     int index = getPlotIndex( plotName );
+    removePlot( index );
+  }
+
+  void GraphDisplay::removePlot( int index ) {
     if (index > -1) {
       for (int i=index; i<_numPlots; i++)
         _plots[i] = _plots[i+1];
+      _numPlots--;
     }
   }
 
-  GraphDisplay::Plot* GraphDisplay::getPlot( const char *plotName ) {
+  GraphDisplay::Plot* GraphDisplay::getPlot( std::string& plotName ) {
     int index = getPlotIndex( plotName );
     if (index > -1)
       return &_plots[index];
@@ -106,16 +131,37 @@ namespace DisplayTask {
       return nullptr;
   }
 
-  int GraphDisplay::getPlotIndex( const char *plotName ) {
+  int GraphDisplay::getPlotIndex( std::string& plotName ) {
     for (int i=0; i<_numPlots; i++) {
-      if (!strcmp( _plots[i].name, plotName ))
+      if (_plots[i].name == plotName )
         return i;
     }
     return -1;
   }
 
-  bool GraphDisplay::hasPlot( const char *plotName ) {
+  bool GraphDisplay::hasPlot( std::string& plotName ) {
     return getPlotIndex( plotName ) > -1;
+  }
+
+  // TextDisplay
+
+  void TextDisplay::init( void ) {
+    _logs = std::deque<std::string>();
+    for (int i=0; i<maxLogs; i++)
+      _logs.push_front( " " );
+  }
+
+  void TextDisplay::addLog( const std::string& newLog ) {
+    _logs.pop_front();
+    _logs.push_back( newLog );
+  }
+
+  void TextDisplay::drawLogs( void ) {
+    int x = left, y = top;
+    for (int i=0; i<maxLogs; i++) {
+      y += logHeight;
+      Draw_8x12_string( (char *)_logs[i].c_str(), _logs[i].length() - 1, x, y, 0xFF);
+    }
   }
 
   // Generated state variables
@@ -128,8 +174,10 @@ namespace DisplayTask {
     // initialize here
     __change_state__ = false;
     __state_delay__ = 100;
-    state_Draw_Square_setState();
+    state_Wait_For_Data_setState();
     // execute the init transition for the initial state and task
+    debugDisplay.init();
+
     ili9341_init();
     clear_vram();
     display_vram();
@@ -139,11 +187,9 @@ namespace DisplayTask {
       // reset __change_state__ to false
       __change_state__ = false;
       // run the proper state function
-      state_Write_Text_execute();
-      state_Draw_Circle_execute();
-      state_Clear_Screen_execute();
-      state_Draw_Square_execute();
-      state_Draw_Line_execute();
+      state_Update_Text_execute();
+      state_Update_Graph_execute();
+      state_Wait_For_Data_execute();
       // now wait if we haven't changed state
       if (!__change_state__) {
         vTaskDelay( MS_TO_TICKS(__state_delay__) );
@@ -155,228 +201,174 @@ namespace DisplayTask {
   }
 
   // Generated state functions
-  const uint8_t state_Write_Text = 0;
+  const uint8_t state_Update_Text = 0;
 
-  void state_Write_Text_execute( void ) {
-    if (__change_state__ || stateLevel_0 != state_Write_Text)
+  void state_Update_Text_execute( void ) {
+    if (__change_state__ || stateLevel_0 != state_Update_Text)
       return;
 
-    state_Write_Text_transition();
+    state_Update_Text_transition();
 
     // execute all substates
 
     if (!__change_state__) {
-      static char *text = "Hello World";
-
-      uint8_t color = rand() % 256;
-      uint16_t x = rand() % (DISPLAY_WIDTH);
-      uint16_t y = rand() % (DISPLAY_HEIGHT);
-
-      Draw_8x12_string( text, strlen(text), x, y, color);
+      debugDisplay.drawLogs();
+      display_vram();
+      updateDone = true;
     }
   }
 
-  void state_Write_Text_setState( void ) {
-    stateLevel_0 = state_Write_Text;
+  void state_Update_Text_setState( void ) {
+    stateLevel_0 = state_Update_Text;
   }
 
-  void state_Write_Text_transition( void ) {
+  void state_Update_Text_transition( void ) {
     if (__change_state__)
       return;
-    else if ( changeState ) {
+    else if ( updateDone ) {
       __change_state__ = true;
       // run the current state's finalization function
-      state_Write_Text_finalization();
+      state_Update_Text_finalization();
       // set the current state to the state we are transitioning to
-      state_Clear_Screen_setState();
+      state_Wait_For_Data_setState();
       // start state timer (@ next states period)
       __state_delay__ = 100;
       // execute the transition function
-      changeState = false;
-          clear_vram();
+      updateDone = false;
 
     }
   }
 
-  void state_Write_Text_finalization( void ) {
+  void state_Update_Text_finalization( void ) {
 
   }
 
-  const uint8_t state_Draw_Circle = 1;
+  const uint8_t state_Update_Graph = 1;
 
-  void state_Draw_Circle_execute( void ) {
-    if (__change_state__ || stateLevel_0 != state_Draw_Circle)
+  void state_Update_Graph_execute( void ) {
+    if (__change_state__ || stateLevel_0 != state_Update_Graph)
       return;
 
-    state_Draw_Circle_transition();
+    state_Update_Graph_transition();
 
     // execute all substates
 
     if (!__change_state__) {
-      uint8_t size = rand() % 10;
-      uint8_t color = rand() % 256;
-      uint16_t x = rand() % (DISPLAY_WIDTH);
-      uint16_t y = rand() % (DISPLAY_HEIGHT);
-      draw_circle({x, y}, size, color & 0b10101010, color);
+      graphDisplay.drawPlots();
+      display_vram();
+      updateDone = true;
     }
   }
 
-  void state_Draw_Circle_setState( void ) {
-    stateLevel_0 = state_Draw_Circle;
+  void state_Update_Graph_setState( void ) {
+    stateLevel_0 = state_Update_Graph;
   }
 
-  void state_Draw_Circle_transition( void ) {
+  void state_Update_Graph_transition( void ) {
     if (__change_state__)
       return;
-    else if ( changeState ) {
+    else if ( updateDone ) {
       __change_state__ = true;
       // run the current state's finalization function
-      state_Draw_Circle_finalization();
+      state_Update_Graph_finalization();
       // set the current state to the state we are transitioning to
-      state_Draw_Line_setState();
+      state_Wait_For_Data_setState();
       // start state timer (@ next states period)
       __state_delay__ = 100;
       // execute the transition function
-      changeState = false;
+      updateDone = false;
 
     }
   }
 
-  void state_Draw_Circle_finalization( void ) {
+  void state_Update_Graph_finalization( void ) {
 
   }
 
-  const uint8_t state_Clear_Screen = 2;
+  const uint8_t state_Wait_For_Data = 2;
 
-  void state_Clear_Screen_execute( void ) {
-    if (__change_state__ || stateLevel_0 != state_Clear_Screen)
+  void state_Wait_For_Data_execute( void ) {
+    if (__change_state__ || stateLevel_0 != state_Wait_For_Data)
       return;
 
-    state_Clear_Screen_transition();
+    state_Wait_For_Data_transition();
 
     // execute all substates
 
     if (!__change_state__) {
-      static char *text = "Hello World";
+      static const std::string delim = "::";
 
-      uint8_t color = rand() % 256;
-      uint16_t x = rand() % (DISPLAY_WIDTH);
-      uint16_t y = rand() % (DISPLAY_HEIGHT);
+      graphDisplay.shiftPlots();
+      graphDisplay.drawPlots();
+      display_vram();
 
-      Draw_8x12_string( text, strlen(text), x, y, color);
+      memset(data, 0, BUF_SIZE);
+      int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 100 / portTICK_RATE_MS);
+      if(len > 0) {
+        // have data, parse here
+        std::string s = (const char*)data;
+        size_t pos = 0;
+        std::string id;
+        std::string value;
+        uint16_t    iValue;
+        if ( (pos = s.find(delim)) != std::string::npos) {
+          // found "::" so we have a plot data
+          id = s.substr(0, pos);
+          pos = pos + delim.length();
+          if ( pos < len - 1) {
+            value = s.substr(pos, len);
+            iValue = std::stoi(value);
+            // make sure we transition to the next state
+            graphDisplay.addData( id, iValue );
+            hasNewPlotData = true;
+          }
+        }
+        if (!hasNewPlotData) {
+          // couldn't find that, so we just have text data
+          debugDisplay.addLog( s );
+          // make sure we transition to the next state
+          hasNewTextData = true;
+        }  
+      }
     }
   }
 
-  void state_Clear_Screen_setState( void ) {
-    stateLevel_0 = state_Clear_Screen;
+  void state_Wait_For_Data_setState( void ) {
+    stateLevel_0 = state_Wait_For_Data;
   }
 
-  void state_Clear_Screen_transition( void ) {
+  void state_Wait_For_Data_transition( void ) {
     if (__change_state__)
       return;
-    else if ( true ) {
+    else if ( hasNewTextData ) {
       __change_state__ = true;
       // run the current state's finalization function
-      state_Clear_Screen_finalization();
+      state_Wait_For_Data_finalization();
       // set the current state to the state we are transitioning to
-      state_Draw_Square_setState();
+      state_Update_Text_setState();
       // start state timer (@ next states period)
       __state_delay__ = 100;
       // execute the transition function
+      hasNewTextData = false;
+          debugDisplay.clear();
 
     }
-  }
-
-  void state_Clear_Screen_finalization( void ) {
-
-  }
-
-  const uint8_t state_Draw_Square = 3;
-
-  void state_Draw_Square_execute( void ) {
-    if (__change_state__ || stateLevel_0 != state_Draw_Square)
-      return;
-
-    state_Draw_Square_transition();
-
-    // execute all substates
-
-    if (!__change_state__) {
-      uint8_t size = rand() % 20;
-      uint8_t color = rand() % 256;
-      uint16_t x = rand() % (DISPLAY_WIDTH);
-      uint16_t y = rand() % (DISPLAY_HEIGHT);
-      draw_rectangle({x, y}, size, size, color & 0b10101010, color);
-    }
-  }
-
-  void state_Draw_Square_setState( void ) {
-    stateLevel_0 = state_Draw_Square;
-  }
-
-  void state_Draw_Square_transition( void ) {
-    if (__change_state__)
-      return;
-    else if ( changeState ) {
+    else if ( hasNewPlotData ) {
       __change_state__ = true;
       // run the current state's finalization function
-      state_Draw_Square_finalization();
+      state_Wait_For_Data_finalization();
       // set the current state to the state we are transitioning to
-      state_Draw_Circle_setState();
+      state_Update_Graph_setState();
       // start state timer (@ next states period)
       __state_delay__ = 100;
       // execute the transition function
-      changeState = false;
+      hasNewPlotData = false;
+          graphDisplay.clear();
 
     }
   }
 
-  void state_Draw_Square_finalization( void ) {
-
-  }
-
-  const uint8_t state_Draw_Line = 4;
-
-  void state_Draw_Line_execute( void ) {
-    if (__change_state__ || stateLevel_0 != state_Draw_Line)
-      return;
-
-    state_Draw_Line_transition();
-
-    // execute all substates
-
-    if (!__change_state__) {
-      uint8_t color = rand() % 256;
-      uint16_t x1 = rand() % (DISPLAY_WIDTH);
-      uint16_t y1 = rand() % (DISPLAY_HEIGHT);
-      uint16_t x2 = rand() % (DISPLAY_WIDTH);
-      uint16_t y2 = rand() % (DISPLAY_HEIGHT);
-      draw_line({x1, y1}, {x2, y2}, color);
-    }
-  }
-
-  void state_Draw_Line_setState( void ) {
-    stateLevel_0 = state_Draw_Line;
-  }
-
-  void state_Draw_Line_transition( void ) {
-    if (__change_state__)
-      return;
-    else if ( changeState ) {
-      __change_state__ = true;
-      // run the current state's finalization function
-      state_Draw_Line_finalization();
-      // set the current state to the state we are transitioning to
-      state_Write_Text_setState();
-      // start state timer (@ next states period)
-      __state_delay__ = 100;
-      // execute the transition function
-      changeState = false;
-
-    }
-  }
-
-  void state_Draw_Line_finalization( void ) {
+  void state_Wait_For_Data_finalization( void ) {
 
   }
 

@@ -4,21 +4,28 @@
 #include <cstdint>
 
 // Task Includes
+#define _GLIBCXX_USE_C99 1    // needed for std::stoi
+
 #include "Display.hpp"
+#include "SerialTask.hpp"
 #include <string.h>
+#include <string>
+#include <deque>
 
 // Generated state functions and members for the task
 namespace DisplayTask {
 
   // Task Forward Declarations
-  extern bool       changeState;
+  extern bool       updateDone;
+  extern bool       hasNewPlotData;
+  extern bool       hasNewTextData;
 
   class Window {
     public:
     Window( int l, int r, int t, int b ) : left(l), right(r), top(t), bottom(b) {}
 
-    int  width  ( void ) { return (right - left); }
-    int  height ( void ) { return (bottom - top); }
+    int  width  ( void ) { return (right - left + 1); }
+    int  height ( void ) { return (bottom - top + 1); }
     
     void clear  ( void ) { clear_vram( left, top, width(), height() ); }
     
@@ -34,40 +41,37 @@ namespace DisplayTask {
     public:
     GraphDisplay( int l, int r, int t, int b ) : Window(l, r, t, b) {}
     
-    #define MAX_PLOT_NAME_LEN 15
+    #define MAX_PLOT_NAME_LEN 100
     #define MIN_X_SPACING     12
     #define MAX_PLOT_DATA_LEN (DISPLAY_WIDTH / MIN_X_SPACING)
     #define MAX_PLOTS         10
 
     struct Plot {
-      enum class DataType { Invalid, Integer, Float };
-      char     name[ MAX_PLOT_NAME_LEN ];
-      char     color;
-      int      range_i;
-      float    range_f;
-      DataType type;
-      union {
-        int   data_i [ MAX_PLOT_DATA_LEN ];
-        float data_f [ MAX_PLOT_DATA_LEN ];
-      };
+      std::string name;
+      char        color;
+      int         range;
+      int         min;
+      int         max;
+      int         data [ MAX_PLOT_DATA_LEN ];
       
-      void shift_i ( int newData );
-      void shift_f ( float newData );
-      void shift   ( void );
+      void init   ( const std::string& newName = "" );
+      void update ( void );
+      void shift  ( int newData );
+      void shift  ( void );
     };
     
     void shiftPlots   ( void ); // left shifts each plot by 1 element
     void drawPlots    ( void );
     void drawPlot     ( Plot* plot );
-    void addIntData   ( const char *plotName, int newData );
-    void addFloatData ( const char *plotName, float newData );
-    bool createPlot   ( const char *plotName, bool overWrite = false );
-    void removePlot   ( const char *plotName );
+    void addData      ( std::string& plotName, int newData );
+    int  createPlot   ( std::string& plotName, bool overWrite = false );
+    void removePlot   ( std::string& plotName );
+    void removePlot   ( int index );
     
     protected:
-    int      getPlotIndex  ( const char *plotName );
-    Plot*    getPlot       ( const char *plotName );
-    bool     hasPlot       ( const char *plotName );
+    int      getPlotIndex  ( std::string& plotName );
+    Plot*    getPlot       ( std::string& plotName );
+    bool     hasPlot       ( std::string& plotName );
     
     private:
     Plot _plots[ MAX_PLOTS ];
@@ -78,11 +82,16 @@ namespace DisplayTask {
     public:
     TextDisplay( int l, int r, int t, int b ) : Window(l, r, t, b) {}
     
-    #define MAX_NUM_LOGS  3
-    #define MAX_LOG_LEN   10
+    static const int maxLogs = 7;
+    static const int logHeight = 12;
+    
+    void init     ( void );
+    void addLog   ( const std::string& newLog );
+    void drawLogs ( void );
     
     private:
-    char _logData[ MAX_NUM_LOGS ][ MAX_LOG_LEN ];
+    std::deque<std::string> _logs;
+    int                     _numLogs = 0;
   };
 
   extern GraphDisplay graphDisplay;
@@ -93,26 +102,18 @@ namespace DisplayTask {
   void  taskFunction ( void *pvParameter );
 
   // Generated state functions
-  void  state_Write_Text_execute      ( void );
-  void  state_Write_Text_setState     ( void );
-  void  state_Write_Text_transition   ( void );
-  void  state_Write_Text_finalization ( void );
-  void  state_Draw_Circle_execute      ( void );
-  void  state_Draw_Circle_setState     ( void );
-  void  state_Draw_Circle_transition   ( void );
-  void  state_Draw_Circle_finalization ( void );
-  void  state_Clear_Screen_execute      ( void );
-  void  state_Clear_Screen_setState     ( void );
-  void  state_Clear_Screen_transition   ( void );
-  void  state_Clear_Screen_finalization ( void );
-  void  state_Draw_Square_execute      ( void );
-  void  state_Draw_Square_setState     ( void );
-  void  state_Draw_Square_transition   ( void );
-  void  state_Draw_Square_finalization ( void );
-  void  state_Draw_Line_execute      ( void );
-  void  state_Draw_Line_setState     ( void );
-  void  state_Draw_Line_transition   ( void );
-  void  state_Draw_Line_finalization ( void );
+  void  state_Update_Text_execute      ( void );
+  void  state_Update_Text_setState     ( void );
+  void  state_Update_Text_transition   ( void );
+  void  state_Update_Text_finalization ( void );
+  void  state_Update_Graph_execute      ( void );
+  void  state_Update_Graph_setState     ( void );
+  void  state_Update_Graph_transition   ( void );
+  void  state_Update_Graph_finalization ( void );
+  void  state_Wait_For_Data_execute      ( void );
+  void  state_Wait_For_Data_setState     ( void );
+  void  state_Wait_For_Data_transition   ( void );
+  void  state_Wait_For_Data_finalization ( void );
 
 };
 

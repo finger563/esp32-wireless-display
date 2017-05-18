@@ -80,15 +80,16 @@ uint16_t myPalette[256] = {
 // TEXT FUNCTIONS:
 void Draw_5x8_char(char* _char_matrix,int x_start,int y_start,unsigned char clr)
 {
-  int row,col;
-  for (col=0;col<=4;col++)
-  {
-    for (row=0;row<=7;row++)
-    {
-      if (!((_char_matrix[col]>>row)&0x01))
-      {
-        if ((row+y_start)>=0 && (row+y_start)< DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< DISPLAY_WIDTH) vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = clr;
-      }
+  int row, col;
+  
+  for (col=0;col<=4;col++) {
+    for (row=0;row<=7;row++) {
+      if ((row+y_start)>=0 && (row+y_start)< DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< DISPLAY_WIDTH) {
+        if (((_char_matrix[row]>>(7-col))&0x01))
+          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = clr;
+        else
+          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = 0x00;
+       }
     }
   }
 }
@@ -97,21 +98,20 @@ void Draw_5x8_string(char* str,unsigned char len,int x_start,int y_start,unsigne
 {
   int i = 0;
   for (i=0;i<len;i++) Draw_5x8_char((char *)char5x8_matrix[(int)str[i]],x_start+i*6,y_start,clr);
-  display_vram();
 }
 
 void Draw_8x12_char(char* _char_matrix,int x_start,int y_start,unsigned char clr)
 {
   int row;
   int col;
-  for (row=0;row<12;row++)
-  {
-    for (col=0;col<8;col++)
-    {
-      if (((_char_matrix[row]>>(7-col))&0x01))
-      {
-        if ((row+y_start)>=0 && (row+y_start)< DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< DISPLAY_WIDTH) vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = clr;
-      }
+  for (row=0;row<12;row++) {
+    for (col=0;col<8;col++) {
+      if ((row+y_start)>=0 && (row+y_start)< DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< DISPLAY_WIDTH) {
+        if (((_char_matrix[row]>>(7-col))&0x01))
+          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = clr;
+        else
+          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = 0x00;
+       }
     }
   }
 }
@@ -119,11 +119,9 @@ void Draw_8x12_char(char* _char_matrix,int x_start,int y_start,unsigned char clr
 void Draw_8x12_string(char* str,unsigned char len,int x_start,int y_start,unsigned char clr)
 {
   int i = 0;
-  for (i=0;i<len;i++)
-  {
+  for (i=0;i<len;i++) {
     Draw_8x12_char((char *)char8x12_matrix[(int)str[i]],x_start+i*9,y_start,clr);
   }
-  display_vram();
 }
 
 // DRAWING FUNCTIONS:
@@ -153,7 +151,6 @@ void draw_rectangle(
 	}
   }
   //blit_vram(xLeft, yTop, xRight - xLeft, yBottom - yTop);
-  display_vram();
 }
 
 void plot4points(int cx, int cy, int x, int y, unsigned char clroutline,unsigned char clrfill)
@@ -226,7 +223,6 @@ void draw_circle(
   int width = maxX - minX,
 		  height = maxY - minY;
   //blit_vram(minX, minY, width, height);
-  display_vram();
 }
 
 void draw_line(
@@ -283,7 +279,6 @@ void draw_line(
 		  width = xe - xs,
 		  height = ye - ys;
   //blit_vram(xs, ys, width, height);
-  display_vram();
 }
 
 
@@ -306,12 +301,12 @@ void clear_vram(
   const uint16_t width,
   const uint16_t height) {
   int xs = MAX(0, x),
-  xe = MIN(DISPLAY_WIDTH, width),
+  xe = MIN(DISPLAY_WIDTH, xs + width),
   ys = MAX(0, y),
-  ye = MIN(DISPLAY_HEIGHT, height),
+  ye = MIN(DISPLAY_HEIGHT, ys + height),
   len = ye - ys;
   for (int i=xs; i<xe; i++) {
-    memset( &vram[ ys + i * DISPLAY_HEIGHT ], 0, ye - ys );
+    memset( &vram[ ys + i * DISPLAY_HEIGHT ], 0, len );
   }
 }
 

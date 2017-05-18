@@ -12,14 +12,20 @@ namespace SerialTask {
 
   // Everything below here is not exported by the header
 
+  void printInfo( void ) {
+    printf("ESP Wireless Display\n");
+    printf("--------------------\n");
+    printf("Send numeric data to be plotted\n");
+    printf("Numeric data should have the form:\n");
+    printf("   < data name / id >::< data value >\n");
+    printf("\n");
+    printf("Send text data to be displayed\n");
+    printf("Any data that is not parsed as numeric data is text data\n");
+  }
+
   static const char *TAG = "uart_events";
 
-  #define EX_UART_NUM UART_NUM_0
-
-  #define BUF_SIZE (1024)
   static QueueHandle_t uart0_queue;
-
-  uint8_t data[BUF_SIZE];
 
   static void uart_event_task(void *pvParameters)
   {
@@ -69,8 +75,6 @@ namespace SerialTask {
             //UART_PATTERN_DET
           case UART_PATTERN_DET:
             ESP_LOGI(TAG, "uart pattern detected\n");
-            changeState = true;
-            DisplayTask::changeState = true;
             break;
             //Others
           default:
@@ -88,7 +92,6 @@ namespace SerialTask {
   bool     __change_state__ = false;
   uint32_t __state_delay__ = 0;
   uint8_t  stateLevel_0;
-  uint8_t  stateLevel_1;
 
   // Generated task function
   void taskFunction ( void *pvParameter ) {
@@ -119,14 +122,12 @@ namespace SerialTask {
     uart_enable_pattern_det_intr(EX_UART_NUM, '+', 3, 10000, 10, 10);
     //Create a task to handler UART event from ISR
     xTaskCreate(uart_event_task, "uart_event_task", 2048, NULL, 12, NULL);
-    printf("SerialTask :: initializing State 1\n");
 
     // now loop running the state code
     while (true) {
       // reset __change_state__ to false
       __change_state__ = false;
       // run the proper state function
-      state_State_2_execute();
       state_State_1_execute();
       // now wait if we haven't changed state
       if (!__change_state__) {
@@ -139,71 +140,7 @@ namespace SerialTask {
   }
 
   // Generated state functions
-  const uint8_t state_State_2 = 0;
-
-  void state_State_2_execute( void ) {
-    if (__change_state__ || stateLevel_0 != state_State_2)
-      return;
-
-    state_State_2_transition();
-
-    // execute all substates
-    state_State_2_State_execute();
-
-    if (!__change_state__) {
-      int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 100 / portTICK_RATE_MS);
-      if(len > 0) {
-        ESP_LOGI(TAG, "uart read : %d", len);
-        //uart_write_bytes(EX_UART_NUM, (const char*)data, len);
-      }
-    }
-  }
-
-  void state_State_2_setState( void ) {
-    stateLevel_0 = state_State_2;
-  }
-
-  void state_State_2_transition( void ) {
-    if (__change_state__)
-      return;
-  }
-
-  void state_State_2_finalization( void ) {
-
-  }
-
-  const uint8_t state_State_2_State = 0;
-
-  void state_State_2_State_execute( void ) {
-    if (__change_state__ || stateLevel_1 != state_State_2_State)
-      return;
-
-    state_State_2_State_transition();
-
-    // execute all substates
-
-    if (!__change_state__) {
-      printf("SerialTask :: State 2 :: State :: periodic Function\n");
-    }
-  }
-
-  void state_State_2_State_setState( void ) {
-    stateLevel_1 = state_State_2_State;
-    state_State_2_setState();
-  }
-
-  void state_State_2_State_transition( void ) {
-    if (__change_state__)
-      return;
-  }
-
-  void state_State_2_State_finalization( void ) {
-
-    // Finalize parent state
-    state_State_2_finalization();
-  }
-
-  const uint8_t state_State_1 = 1;
+  const uint8_t state_State_1 = 0;
 
   void state_State_1_execute( void ) {
     if (__change_state__ || stateLevel_0 != state_State_1)
@@ -214,13 +151,13 @@ namespace SerialTask {
     // execute all substates
 
     if (!__change_state__) {
-      printf("SerialTask :: State 1 :: periodic Function\n");
+      static uint8_t startupCounter = 0;
+      static const uint8_t waitCounter = 1;
 
-      int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 100 / portTICK_RATE_MS);
-      if(len > 0) {
-        ESP_LOGI(TAG, "uart read : %d", len);
-        uart_write_bytes(EX_UART_NUM, (const char*)data, len);
-      }
+      if (startupCounter == waitCounter)
+        printInfo();
+
+      startupCounter++;
     }
   }
 
@@ -231,19 +168,6 @@ namespace SerialTask {
   void state_State_1_transition( void ) {
     if (__change_state__)
       return;
-    else if ( changeState ) {
-      __change_state__ = true;
-      // run the current state's finalization function
-      state_State_1_finalization();
-      // set the current state to the state we are transitioning to
-      state_State_2_State_setState();
-      // start state timer (@ next states period)
-      __state_delay__ = 500;
-      // execute the transition function
-      printf("SerialTask :: transition function!\n");
-      changeState = false;
-
-    }
   }
 
   void state_State_1_finalization( void ) {
