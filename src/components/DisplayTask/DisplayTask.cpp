@@ -18,7 +18,7 @@ namespace DisplayTask {
   int debugHeight = DISPLAY_HEIGHT - graphHeight;
 
   GraphDisplay graphDisplay( 0, DISPLAY_WIDTH, 0, graphHeight );
-  TextDisplay  debugDisplay( 0, DISPLAY_WIDTH, graphHeight, DISPLAY_HEIGHT );
+  TextDisplay  debugDisplay( 0, DISPLAY_WIDTH, graphHeight + 1, DISPLAY_HEIGHT );
 
   // Graph Display
 
@@ -69,8 +69,11 @@ namespace DisplayTask {
   void GraphDisplay::shiftPlots( void ) {
     for (int i=0; i<_numPlots; i++) {
       _plots[i].shift( 0 );
-      _plots[i].update();
     }
+  }
+
+  void GraphDisplay::clearPlots( void ) {
+    _numPlots = 0;
   }
 
   void GraphDisplay::drawPlots( void ) {
@@ -146,6 +149,10 @@ namespace DisplayTask {
   // TextDisplay
 
   void TextDisplay::init( void ) {
+    clearLogs();
+  }
+
+  void TextDisplay::clearLogs( void ) {
     _logs = std::deque<std::string>();
     for (int i=0; i<maxLogs; i++)
       _logs.push_front( " " );
@@ -160,7 +167,7 @@ namespace DisplayTask {
     int x = left, y = top;
     for (int i=0; i<maxLogs; i++) {
       y += logHeight;
-      Draw_8x12_string( (char *)_logs[i].c_str(), _logs[i].length() - 1, x, y, 0xFF);
+      Draw_8x12_string( (char *)_logs[i].c_str(), _logs[i].length(), x, y, 0xFF);
     }
   }
 
@@ -296,39 +303,80 @@ namespace DisplayTask {
     // execute all substates
 
     if (!__change_state__) {
-      static const std::string delim = "::";
+      static const std::string dataDelim = "::";
+      static const std::string commandDelim = "+++"; // should start with this for command
+      static const std::string removePlotCommand = "REMOVE PLOT:"; // followed by log name
+      static const std::string clearPlotsCommand = "CLEAR PLOTS";
+      static const std::string clearLogsCommand = "CLEAR LOGS";
 
+      /*
+      graphDisplay.clear();
       graphDisplay.shiftPlots();
       graphDisplay.drawPlots();
       display_vram();
+      */
 
       memset(data, 0, BUF_SIZE);
-      int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 100 / portTICK_RATE_MS);
+      int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 0);//100 / portTICK_RATE_MS);
       if(len > 0) {
         // have data, parse here
-        std::string s = (const char*)data;
-        size_t pos = 0;
-        std::string id;
-        std::string value;
-        uint16_t    iValue;
-        if ( (pos = s.find(delim)) != std::string::npos) {
-          // found "::" so we have a plot data
-          id = s.substr(0, pos);
-          pos = pos + delim.length();
-          if ( pos < len - 1) {
-            value = s.substr(pos, len);
-            iValue = std::stoi(value);
-            // make sure we transition to the next state
-            graphDisplay.addData( id, iValue );
-            hasNewPlotData = true;
+        std::stringstream ss((char *)data);
+        std::string line;
+        while (std::getline(ss, line, '\n')) {
+          size_t pos = 0;
+          // parse for commands
+          if ( (pos = line.find(commandDelim)) != std::string::npos) {
+            std::string command;
+            std::string plotName;
+            command = line.substr(pos + commandDelim.length(), line.length());
+            if (command == clearLogsCommand) {
+              debugDisplay.clearLogs();
+              // make sure we transition to the next state
+              hasNewTextData = true;
+            }
+            else if (command == clearPlotsCommand) {
+              graphDisplay.clearPlots();
+              // make sure we transition to the next state
+              hasNewPlotData = true;
+            }
+            else if ( (pos = line.find(removePlotCommand)) != std::string::npos) {
+              plotName = line.substr(pos + removePlotCommand.length(), line.length());
+              graphDisplay.removePlot( plotName );
+              // make sure we transition to the next state
+              hasNewPlotData = true;
+            }
+          }
+          else {
+            // parse for data
+            if ( (pos = line.find(dataDelim)) != std::string::npos) {
+              // found "::" so we have a plot data
+              std::string plotName;
+              std::string value;
+              int         iValue;
+              plotName = line.substr(0, pos);
+              pos = pos + dataDelim.length();
+              if ( pos < line.length() ) {
+                value = line.substr(pos, line.length());
+                iValue = std::stoi(value);
+                // make sure we transition to the next state
+                graphDisplay.addData( plotName, iValue );
+                hasNewPlotData = true;
+              }
+              else {
+                // couldn't find that, so we just have text data
+                debugDisplay.addLog( line );
+                // make sure we transition to the next state
+                hasNewTextData = true;
+              }
+            }
+            else {
+              // couldn't find that, so we just have text data
+              debugDisplay.addLog( line );
+              // make sure we transition to the next state
+              hasNewTextData = true;
+            }
           }
         }
-        if (!hasNewPlotData) {
-          // couldn't find that, so we just have text data
-          debugDisplay.addLog( s );
-          // make sure we transition to the next state
-          hasNewTextData = true;
-        }  
       }
     }
   }

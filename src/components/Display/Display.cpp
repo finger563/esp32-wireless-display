@@ -214,15 +214,8 @@ void draw_circle(
 		const uint8_t  outline,
 		const uint8_t  fill) {
   int cx = pos.x,
-		  cy = pos.y,
-		  minX = cx - radius,
-		  maxX = cx + radius,
-		  minY = cy - radius,
-		  maxY = cy + radius;
+		  cy = pos.y;
   circle(cx, cy, radius, outline, fill);
-  int width = maxX - minX,
-		  height = maxY - minY;
-  //blit_vram(minX, minY, width, height);
 }
 
 void draw_line(
@@ -272,13 +265,6 @@ void draw_line(
 	  error = error + dx;
 	}
   }
-  int xs = MAX(0, xLeft),
-		  ys = MAX(0, yTop),
-		  xe = MIN(DISPLAY_WIDTH, xRight),
-		  ye = MIN(DISPLAY_HEIGHT, yBottom),
-		  width = xe - xs,
-		  height = ye - ys;
-  //blit_vram(xs, ys, width, height);
 }
 
 

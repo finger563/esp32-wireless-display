@@ -10,6 +10,7 @@
 #include "SerialTask.hpp"
 #include <string.h>
 #include <string>
+#include <sstream>
 #include <deque>
 
 // Generated state functions and members for the task
@@ -61,6 +62,7 @@ namespace DisplayTask {
     };
     
     void shiftPlots   ( void ); // left shifts each plot by 1 element
+    void clearPlots   ( void );
     void drawPlots    ( void );
     void drawPlot     ( Plot* plot );
     void addData      ( std::string& plotName, int newData );
@@ -86,6 +88,7 @@ namespace DisplayTask {
     static const int logHeight = 12;
     
     void init     ( void );
+    void clearLogs( void );
     void addLog   ( const std::string& newLog );
     void drawLogs ( void );
     
