@@ -32,8 +32,6 @@ namespace DisplayTask {
   }
 
   void GraphDisplay::Plot::update( void ) {
-    min = 0;
-    max = 0;
     for (int i=0; i<MAX_PLOT_DATA_LEN; i++) {
       if (data[i] > max)
         max = data[i];
@@ -305,6 +303,8 @@ namespace DisplayTask {
     if (!__change_state__) {
       static const std::string dataDelim = "::";
       static const std::string commandDelim = "+++"; // should start with this for command
+      static const std::string shiftPlotCommand = "SHIFT PLOT:"; // followed by log name
+      static const std::string shiftPlotsCommand = "SHIFT PLOTS";
       static const std::string removePlotCommand = "REMOVE PLOT:"; // followed by log name
       static const std::string clearPlotsCommand = "CLEAR PLOTS";
       static const std::string clearLogsCommand = "CLEAR LOGS";

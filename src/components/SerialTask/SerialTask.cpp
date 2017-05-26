@@ -154,10 +154,12 @@ namespace SerialTask {
       static uint8_t startupCounter = 0;
       static const uint8_t waitCounter = 1;
 
-      if (startupCounter == waitCounter)
+      if (startupCounter == waitCounter) {
         printInfo();
-
-      startupCounter++;
+        startupCounter++;
+      }
+      else if (startupCounter < waitCounter)
+        startupCounter++;
     }
   }
 
