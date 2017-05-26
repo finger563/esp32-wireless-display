@@ -8,6 +8,16 @@
 namespace WirelessTask {
 
   // User definitions for the task
+  extern "C" {
+    #include <string.h>
+    #include <sys/socket.h>
+  }
+
+  static int mysocket;
+
+  static struct sockaddr_in remote_addr;
+  static unsigned int socklen;
+
   static esp_err_t event_handler(void *ctx, system_event_t *event)
   {
     switch(event->event_id) {
@@ -53,7 +63,7 @@ namespace WirelessTask {
   void taskFunction ( void *pvParameter ) {
     // initialize here
     __change_state__ = false;
-    __state_delay__ = 1000;
+    __state_delay__ = 10;
     state_State_1_setState();
     // execute the init transition for the initial state and task
     #if 1
@@ -99,12 +109,31 @@ namespace WirelessTask {
     }
 
     /*create a task to tx/rx data*/
-    TaskHandle_t tx_rx_task;
-    xTaskCreate(&send_recv_data, "send_recv_data", 4096, NULL, 4, &tx_rx_task);
+    //TaskHandle_t tx_rx_task;
+    //xTaskCreate(&send_recv_data, "send_recv_data", 4096, NULL, 4, &tx_rx_task);
 
     /*waiting udp connected success*/
-    xEventGroupWaitBits(udp_event_group, UDP_CONNCETED_SUCCESS,false, true, portMAX_DELAY);
-    ESP_LOGI(TAG, "udp connected");
+    //xEventGroupWaitBits(udp_event_group, UDP_CONNCETED_SUCCESS,false, true, portMAX_DELAY);
+    //ESP_LOGI(TAG, "udp connected");
+
+    int len;
+    char databuff[EXAMPLE_DEFAULT_PKTSIZE];
+
+    /*send&receive first packet*/
+    socklen = sizeof(remote_addr);
+
+    ESP_LOGI(TAG, "first recvfrom:");
+    len = recvfrom(mysocket, databuff, EXAMPLE_DEFAULT_PKTSIZE, 0, (struct sockaddr *)&remote_addr, &socklen);
+
+    if (len > 0) {
+      ESP_LOGI(TAG, "transfer data with %s:%u\n",
+               inet_ntoa(remote_addr.sin_addr), ntohs(remote_addr.sin_port));
+      xEventGroupSetBits(udp_event_group, UDP_CONNCETED_SUCCESS);
+    } else {
+      show_socket_error_reason(mysocket);
+      close(mysocket);
+      vTaskDelete(NULL);
+    } /*if (len > 0)*/
 
     // now loop running the state code
     while (true) {
@@ -134,7 +163,21 @@ namespace WirelessTask {
     // execute all substates
 
     if (!__change_state__) {
-
+      int len;
+      char databuff[EXAMPLE_DEFAULT_PKTSIZE];
+      memset( databuff, 0, EXAMPLE_DEFAULT_PKTSIZE );
+      len = recvfrom(mysocket, databuff, EXAMPLE_DEFAULT_PKTSIZE, 0, (struct sockaddr *)&remote_addr, &socklen);
+      if (len > 0) {
+        ESP_LOGI(TAG, "transfer data with %s:%u\n",
+                 inet_ntoa(remote_addr.sin_addr), ntohs(remote_addr.sin_port));
+        ESP_LOGI(TAG, " received: %s", databuff);
+        std::string newData( (const char *)databuff );
+        DisplayTask::pushData( newData );
+      } else {
+        if (LOG_LOCAL_LEVEL >= ESP_LOG_DEBUG) {
+          show_socket_error_reason(mysocket);
+        }
+      } /*if (len > 0)*/
     }
   }
 

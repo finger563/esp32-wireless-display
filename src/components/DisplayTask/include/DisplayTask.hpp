@@ -7,11 +7,19 @@
 #define _GLIBCXX_USE_C99 1    // needed for std::stoi
 
 #include "Display.hpp"
-#include "SerialTask.hpp"
 #include <string.h>
 #include <string>
 #include <sstream>
+#include <queue>
 #include <deque>
+#include <mutex>
+
+extern "C" {  
+  #include "freertos/FreeRTOS.h"
+  #include "freertos/task.h"
+  #include "freertos/event_groups.h"
+  #include "freertos/semphr.h"
+}
 
 // Generated state functions and members for the task
 namespace DisplayTask {
@@ -20,6 +28,12 @@ namespace DisplayTask {
   extern bool       updateDone;
   extern bool       hasNewPlotData;
   extern bool       hasNewTextData;
+  // for interacting sending data to the display
+  extern std::queue<std::string> qData;
+  extern SemaphoreHandle_t       qDataMutex;
+
+  void        pushData ( std::string data );
+  std::string popData  ( void );
 
   class Window {
     public:

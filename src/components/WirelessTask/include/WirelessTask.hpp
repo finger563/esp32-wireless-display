@@ -4,6 +4,8 @@
 #include <cstdint>
 
 // Task Includes
+#include "DisplayTask.hpp"
+
 extern "C" {
   #include "UDPServer.h"
 }

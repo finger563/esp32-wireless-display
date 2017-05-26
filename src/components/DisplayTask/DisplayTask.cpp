@@ -11,8 +11,28 @@ namespace DisplayTask {
   bool updateDone      = false;
   bool hasNewPlotData  = false;
   bool hasNewTextData  = false;
+  // for sending data to the display
+  std::queue<std::string> qData;
+  SemaphoreHandle_t       qDataMutex = NULL;
 
-  uint8_t data[BUF_SIZE];
+  void pushData ( std::string data ) {
+    if ( xSemaphoreTake( qDataMutex, ( TickType_t ) 100 ) == pdTRUE ) {
+      qData.push(data);
+      xSemaphoreGive( qDataMutex );
+    }
+  }
+
+  std::string popData  ( void ) {
+    std::string retData = "";
+    if ( xSemaphoreTake( qDataMutex, ( TickType_t ) 100 ) == pdTRUE ) {
+      if (!qData.empty()) {
+        retData = qData.front();
+        qData.pop();
+      }
+      xSemaphoreGive( qDataMutex );
+    }
+    return retData;
+  }
 
   int graphHeight = DISPLAY_HEIGHT * 2 / 3;
   int debugHeight = DISPLAY_HEIGHT - graphHeight;
@@ -181,6 +201,8 @@ namespace DisplayTask {
     __state_delay__ = 100;
     state_Wait_For_Data_setState();
     // execute the init transition for the initial state and task
+    qDataMutex = xSemaphoreCreateMutex();
+
     debugDisplay.init();
 
     ili9341_init();
@@ -309,18 +331,11 @@ namespace DisplayTask {
       static const std::string clearPlotsCommand = "CLEAR PLOTS";
       static const std::string clearLogsCommand = "CLEAR LOGS";
 
-      /*
-      graphDisplay.clear();
-      graphDisplay.shiftPlots();
-      graphDisplay.drawPlots();
-      display_vram();
-      */
-
-      memset(data, 0, BUF_SIZE);
-      int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 0);//100 / portTICK_RATE_MS);
+      std::string newData = popData();
+      int len = newData.length();
       if(len > 0) {
         // have data, parse here
-        std::stringstream ss((char *)data);
+        std::stringstream ss(newData);
         std::string line;
         while (std::getline(ss, line, '\n')) {
           size_t pos = 0;

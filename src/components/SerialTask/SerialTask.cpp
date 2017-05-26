@@ -12,6 +12,9 @@ namespace SerialTask {
 
   // Everything below here is not exported by the header
 
+  #define EX_UART_NUM   UART_NUM_0
+  #define BUF_SIZE      (1024)
+
   void printInfo( void ) {
     printf("ESP Wireless Display\n");
     printf("--------------------\n");
@@ -97,7 +100,7 @@ namespace SerialTask {
   void taskFunction ( void *pvParameter ) {
     // initialize here
     __change_state__ = false;
-    __state_delay__ = 1000;
+    __state_delay__ = 100;
     state_State_1_setState();
     // execute the init transition for the initial state and task
     uart_config_t uart_config = {
@@ -152,7 +155,9 @@ namespace SerialTask {
 
     if (!__change_state__) {
       static uint8_t startupCounter = 0;
-      static const uint8_t waitCounter = 1;
+      static const uint8_t waitCounter = 10;
+
+      uint8_t data[BUF_SIZE];
 
       if (startupCounter == waitCounter) {
         printInfo();
@@ -160,6 +165,13 @@ namespace SerialTask {
       }
       else if (startupCounter < waitCounter)
         startupCounter++;
+
+      memset(data, 0, BUF_SIZE);
+      int len = uart_read_bytes(EX_UART_NUM, data, BUF_SIZE, 0);//100 / portTICK_RATE_MS);
+      if (len > 0) {
+        std::string newData( (const char *)data );
+        DisplayTask::pushData(newData);
+      }
     }
   }
 

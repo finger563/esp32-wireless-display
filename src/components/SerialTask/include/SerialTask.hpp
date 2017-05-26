@@ -10,8 +10,7 @@
 #include "esp_log.h"
 #include "soc/uart_struct.h"
 
-#define EX_UART_NUM   UART_NUM_0
-#define BUF_SIZE      (1024)
+#include "DisplayTask.hpp"
 
 // Generated state functions and members for the task
 namespace SerialTask {
