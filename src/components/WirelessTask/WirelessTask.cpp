@@ -20,6 +20,7 @@ namespace WirelessTask {
 
   static esp_err_t event_handler(void *ctx, system_event_t *event)
   {
+    std::string ipStr;
     switch(event->event_id) {
       case SYSTEM_EVENT_STA_START:
         esp_wifi_connect();
@@ -34,6 +35,9 @@ namespace WirelessTask {
         ESP_LOGI(TAG, "event_handler:SYSTEM_EVENT_STA_GOT_IP!");
         ESP_LOGI(TAG, "got ip:%s\n",
                  ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+        ipStr = std::string("IP: ") + ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip);
+        ipStr += ":" + std::to_string(EXAMPLE_DEFAULT_PORT);
+        DisplayTask::pushData( ipStr );
         xEventGroupSetBits(udp_event_group, WIFI_CONNECTED_BIT);
         break;
       case SYSTEM_EVENT_AP_STACONNECTED:
