@@ -1,0 +1,40 @@
+menu "Window Configuration"
+
+    config CONFIG_WINDOW_MAX_PLOT_NAME_LENGTH
+        int "Max Plot Name Length"
+        default 100
+        help
+            Set to the number of characters per named plot.
+            Anything beyond this value will be clipped.
+            Plot names are used to ensure each plotted series is uniquely identified.
+            Two plots which resolve to the same name will write to the same data and be shown as the same data.
+
+    config CONFIG_WINDOW_PLOT_X_SPACING
+        int "Horizontal spacing (pixels) between successive points"
+        default 320
+        help
+            Set to the number of pixels between any two successive points in the plotted graph.
+            The larger this number the further (pixel) distance between each plotted point,
+            and therefore the plot will transition faster / show fewer data points on the screen.
+
+    config CONFIG_WINDOW_MAX_PLOTS
+        int "Maximum number of plots that can be shown simultaneously."
+        default 10
+        help
+            Maximum number of plots that can be shown at a time.
+            Directly controls memory usage of the plotting infrastructure.
+
+    config CONFIG_WINDOW_MAX_TEXT_LOGS
+        int "Maximum number of text logs that can be shown simultaneously."
+        default 7
+        help
+            Maximum number of text logs that can be shown at a time.
+            Directly controls memory usage of the logging infrastructure.
+
+    config CONFIG_WINDOW_TEXT_LOG_HEIGHT
+        int "Line height (pixels) of the text logs."
+        default 12
+        help
+            Controls which font to use and how much spacing to give each line.
+
+endmenu

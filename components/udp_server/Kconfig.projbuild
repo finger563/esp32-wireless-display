@@ -1,0 +1,24 @@
+menu "UDP Server Configuration"
+
+    choice UDP_SERVER_IP_MODE
+        prompt "IP Version"
+        help
+            UDP Server can use either IPV4 or IPV6.
+
+        config UDP_SERVER_IPV4
+            bool "IPV4"
+
+        config UDP_SERVER_IPV6
+            bool "IPV6"
+            select UDP_SERVER_CONNECT_IPV6
+
+    endchoice
+
+    config UDP_SERVER_PORT
+        int "Port"
+        range 0 65535
+        default 3333
+        help
+            Local port the example server will listen on.
+
+endmenu

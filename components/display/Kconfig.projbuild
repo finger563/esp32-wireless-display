@@ -1,0 +1,110 @@
+menu "Display Configuration"
+
+    config CONFIG_DISPLAY_WIDTH
+        int "Display Width (pixels)"
+        default 240
+        help
+            Set to the number of pixels across the width of the display.
+
+    config CONFIG_DISPLAY_HEIGHT
+        int "Display Height (pixels)"
+        default 320
+        help
+            Set to the number of pixels across the height of the display.
+
+    config CONFIG_DISPLAY_USE_SPI
+        bool
+        default y
+
+    choice CONFIG_DISPLAY_TYPE
+        prompt "Display Type"
+        default CONFIG_DISPLAY_USE_ILI9341
+        help
+            Select which kind of Display will be used in the example.
+
+        config CONFIG_DISPLAY_USE_ILI9341
+            depends on IDF_TARGET_ESP32
+            select DISPLAY_USE_ILI9341
+            bool "ILI 9341"
+            help
+                Select ILI 9341 based display.
+
+    endchoice # CONFIG_DISPLAY_TYPE
+
+    if CONFIG_DISPLAY_USE_SPI
+        config DISPLAY_SPI_BUS
+            int "Display SPI Bus"
+            range 0 3
+            default 3
+            help
+                Set which SPI bus the display is on.
+
+        config DISPLAY_SPI_CLOCK_MHZ
+            int "SPI clock speed (MHz)"
+            range 5 80
+            default 12 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32C3
+            default 12 if IDF_TARGET_ESP32S2
+            help
+                Set the clock speed (MHz) of SPI interface.
+
+        config DISPLAY_SPI_CIPO_PIN
+            int "SPI CIPO number"
+            range 0 34 if IDF_TARGET_ESP32
+            range 0 46 if IDF_TARGET_ESP32S2
+            range 0 19 if IDF_TARGET_ESP32C3
+            default 25
+            help
+                Set the pin number used by SPI CIPO.
+
+        config DISPLAY_SPI_COPI_PIN
+            int "SPI COPI number"
+            range 0 34 if IDF_TARGET_ESP32
+            range 0 46 if IDF_TARGET_ESP32S2
+            range 0 19 if IDF_TARGET_ESP32C3
+            default 23
+            help
+                Set the pin number used by SPI COPI.
+
+        config DISPLAY_SPI_CLK_PIN
+            int "SPI CLK number"
+            range 0 34 if IDF_TARGET_ESP32
+            range 0 46 if IDF_TARGET_ESP32S2
+            range 0 19 if IDF_TARGET_ESP32C3
+            default 19
+            help
+                Set the pin number used by SPI CLK.
+
+        config DISPLAY_SPI_CS_PIN
+            int "SPI CS number"
+            range 0 34 if IDF_TARGET_ESP32
+            range 0 46 if IDF_TARGET_ESP32S2
+            range 0 19 if IDF_TARGET_ESP32C3
+            default 22
+            help
+                Set the pin number used by SPI CS.
+    endif # CONFIG_DISPLAY_USE_SPI
+
+    if CONFIG_DISPLAY_USE_ILI9341
+        config DISPLAY_DC_PIN
+            int "DC GPIO number"
+            range 0 42
+            default 21
+            help
+                Set the pin number used by Display DC.
+
+        config DISPLAY_RST_PIN
+            int "RST GPIO number"
+            range 0 42
+            default 18
+            help
+                Set the pin number used by Display RST.
+
+        config DISPLAY_BACKLIGHT_PIN
+            int "Backlight GPIO number"
+            range 0 42
+            default 5
+            help
+                Set the pin number used by Display Backlight.
+    endif # CONFIG_DISPLAY_USE_ILI9341
+
+endmenu
