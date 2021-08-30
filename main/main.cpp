@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "wifi.hpp"
+#include "uart.hpp"
 #include "udp_server.hpp"
 
 using namespace std::chrono_literals;
@@ -25,9 +26,9 @@ extern "C" void app_main(void) {
     {
      // we received a message, let the display manager know and handle
      // it
-     std::string newData( (const char *)databuff );
-     DisplayTask::pushData( newData );
-     // return a string if we want to respond to the sender
+     // DisplayTask::pushData( message );
+     // return a string if we want to respond to the sender, else return {}
+     return {};
     };
 
   auto task_config = phoenix::Task::Config{.stack_size_bytes=4096};
