@@ -1,11 +1,28 @@
 menu "Wireless Display Example Configuration"
 
+    choice
+        prompt "Hardware Configuration"
+        default ESP_32_WROVER_KIT_V4
+        help
+            Select the dev-kit / hardware you're using.
+            If you're using custom, make sure to configure the UART pins,
+            as well as the display chipset & pin configuration.
+        config ESP_32_WROVER_KIT_V4
+            bool "ESP_32_WROVER_KIT_V4"
+            select DISPLAY_USE_ILI9341
+        config ESP_32_S2_HMI_DEVKIT_1
+            bool "ESP_32_S2_HMI_DEVKIT_1"
+        config CUSTOM_HARDWARE
+            bool "CUSTOM_HARDWARE"
+    endchoice
+
     config UART_PORT
         int "UART Port"
         range 0 2 if IDF_TARGET_ESP32
         range 0 1 if IDF_TARGET_ESP32S2
         range 0 1 if IDF_TARGET_ESP32C3
-        default 1
+        default 1 if ESP_32_WROVER_KIT_V4
+        default 1 if ESP_32_S2_HMI_DEVKIT_1
         help
             Set which UART to use for receiving data for display.
 
@@ -15,6 +32,8 @@ menu "Wireless Display Example Configuration"
         help
             Set the baudrate (bits per second) for the UART port.
 
+        config UART_BAUDRATE_2000000
+            bool "2000000"
         config UART_BAUDRATE_115200
             bool "115200"
         config UART_BAUDRATE_9600
@@ -22,6 +41,7 @@ menu "Wireless Display Example Configuration"
     endchoice
     config UART_BAUDRATE
         int
+        default 2000000 if UART_BAUDRATE_2000000
         default 115200 if UART_BAUDRATE_115200
         default 9600 if UART_BAUDRATE_9600
 

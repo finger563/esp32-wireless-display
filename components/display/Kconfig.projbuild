@@ -2,19 +2,22 @@ menu "Display Configuration"
 
     config DISPLAY_WIDTH
         int "Display Width (pixels)"
-        default 240
+        default 240 if ESP_32_WROVER_KIT_V4
+        default 480 if ESP_32_S2_HMI_DEVKIT_1
         help
             Set to the number of pixels across the width of the display.
 
     config DISPLAY_HEIGHT
         int "Display Height (pixels)"
-        default 320
+        default 320 if ESP_32_WROVER_KIT_V4
+        default 800 if ESP_32_S2_HMI_DEVKIT_1
         help
             Set to the number of pixels across the height of the display.
 
     config DISPLAY_USE_SPI
         bool
-        default y
+        default y if ESP_32_WROVER_KIT_V4
+        default n if ESP_32_S2_HMI_DEVKIT_1
 
     choice DISPLAY_TYPE
         prompt "Display Type"
