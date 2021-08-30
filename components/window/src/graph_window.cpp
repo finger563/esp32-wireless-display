@@ -2,15 +2,6 @@
 
 using namespace display;
 
-void GraphWindow::Plot::init( const std::string& newName ) {
-  name = newName;
-  color = rand() % 256;
-  range = 1;
-  min = 0;
-  max = 0;
-  memset( data, 0, max_data_length );
-}
-
 void GraphWindow::Plot::update( void ) {
   for (int i=0; i<max_data_length; i++) {
     if (data[i] > max)
@@ -33,7 +24,7 @@ void GraphWindow::Plot::shift( void ) {
     data[i] = data[i + 1];
 }
 
-void GraphWindow::draw_plot( GraphWindow::Plot* plot ) {
+void GraphWindow::draw_plot( const Plot* plot ) {
   // draw line from (i-1) -> (i) for all points in the plot, so start
   // at second index (1)
   for (int i=1; i<Plot::max_data_length; i++) {
@@ -62,7 +53,7 @@ void GraphWindow::draw_plots( void ) {
   }
 }
 
-void GraphWindow::add_data( std::string& plotName, int newData ) {
+void GraphWindow::add_data( const std::string& plotName, int newData ) {
   int pi = get_plot_index( plotName );
   // couldn't find the plot so create a new one
   if ( pi == -1 )
@@ -72,32 +63,21 @@ void GraphWindow::add_data( std::string& plotName, int newData ) {
     _plots[pi].shift( newData );
 }
 
-int GraphWindow::create_plot( std::string& plotName ) {
-  int index = get_plot_index( plotName );
-  if (index > -1) {
-    if ( overWrite ) {
-      // will overwrite plot that has the same name with empty plot
-      _plots[index].init( plotName );
-    }
-    return index;
+int GraphWindow::create_plot( const std::string& plotName ) {
+  // we we have to create a new plot
+  if ( _num_plots >= CONFIG_WINDOW_MAX_PLOTS) {
+    // we're out of space, need to throw away the "oldest" plot (by
+    // plot creation, not last updated). This will update _num_plots
+    // so we can create a new one
+    remove_plot(0);
   }
-  else {
-    // we we have to create a new plot
-    if ( _num_plots >= CONFIG_WINDOW_MAX_PLOTS) {
-      // we're out of space, need to throw away the "oldest" plot (by
-      // plot creation, not last updated). This will update _num_plots
-      // so we can create a new one
-      remove_plot(0);
-    }
-    // update the num_plots and create the new plot
-    index = _num_plots++;
-    _plots[index].init( plotName );
-    return index;
-  }
-  return -1;
+  // update the num_plots and create the new plot
+  int index = _num_plots++;
+  _plots[index] = Plot( plotName );
+  return index;
 }
 
-void GraphWindow::remove_plot( std::string& plotName ) {
+void GraphWindow::remove_plot( const std::string& plotName ) {
   int index = get_plot_index( plotName );
   remove_plot( index );
 }
@@ -110,7 +90,7 @@ void GraphWindow::remove_plot( int index ) {
   }
 }
 
-GraphWindow::Plot* GraphWindow::get_plot( std::string& plotName ) {
+GraphWindow::Plot* GraphWindow::get_plot( const std::string& plotName ) {
   int index = get_plot_index( plotName );
   if (index > -1)
     return &_plots[index];
@@ -118,7 +98,7 @@ GraphWindow::Plot* GraphWindow::get_plot( std::string& plotName ) {
     return nullptr;
 }
 
-int GraphWindow::get_plot_index( std::string& plotName ) {
+int GraphWindow::get_plot_index( const std::string& plotName ) {
   for (int i=0; i<_num_plots; i++) {
     if (_plots[i].name == plotName )
       return i;
@@ -126,7 +106,7 @@ int GraphWindow::get_plot_index( std::string& plotName ) {
   return -1;
 }
 
-bool GraphWindow::has_plot( std::string& plotName ) {
+bool GraphWindow::has_plot( const std::string& plotName ) {
   return get_plot_index( plotName ) > -1;
 }
 

@@ -1,5 +1,11 @@
 #pragma once
 
+#include <string>
+
+#include "sdkconfig.h"
+
+#include <cstring>
+
 #include "window.hpp"
 
 namespace display {
@@ -8,16 +14,18 @@ namespace display {
     GraphWindow( int l, int r, int t, int b ) : Window(l, r, t, b) {}
 
     struct Plot {
-      static const size_t max_data_length = CONFIG_DISPLAY_WIDTH / CONFIG_WINDOW_PLOT_X_SPACING;
+      static const size_t max_data_length = CONFIG_WINDOW_PLOT_MAX_DATA_LENGTH;
 
-      std::string name;
-      char        color;
-      int         range;
-      int         min;
-      int         max;
-      int         data [ max_data_length ];
+      std::string name{""};
+      char        color{(char)(rand()%256)};
+      int         range{1};
+      int         min{0};
+      int         max{0};
+      int         data [ max_data_length ] = {0};
 
-      void init   ( const std::string& newName = "" );
+      Plot() {}
+      Plot(const std::string& plot_name): name(plot_name) {}
+
       void update ( void );
       void shift  ( int newData );
       void shift  ( void );
@@ -26,16 +34,16 @@ namespace display {
     void shift_plots   ( void ); // left shifts each plot by 1 element
     void clear_plots   ( void );
     void draw_plots    ( void );
-    void draw_plot     ( Plot* plot );
-    void add_data      ( std::string& plotName, int newData );
-    int  create_plot   ( std::string& plotName, bool overWrite = false );
-    void remove_plot   ( std::string& plotName );
+    void draw_plot     ( const Plot* plot );
+    void add_data      ( const std::string& plotName, int newData );
+    int  create_plot   ( const std::string& plotName );
+    void remove_plot   ( const std::string& plotName );
     void remove_plot   ( int index );
 
     protected:
-    int      get_plot_index  ( std::string& plotName );
-    Plot*    get_plot        ( std::string& plotName );
-    bool     has_plot        ( std::string& plotName );
+    int      get_plot_index  ( const std::string& plotName );
+    Plot*    get_plot        ( const std::string& plotName );
+    bool     has_plot        ( const std::string& plotName );
 
     private:
     Plot _plots[ CONFIG_WINDOW_MAX_PLOTS ];

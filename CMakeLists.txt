@@ -9,7 +9,7 @@ set(EXTRA_COMPONENT_DIRS "./components")
 
 set(
   COMPONENTS
-  "main esptool_py display uart wifi udp_server"
+  "main esptool_py display wireless_display window uart wifi udp_server"
   CACHE STRING
   "List of components to include"
   )

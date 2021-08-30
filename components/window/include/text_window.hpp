@@ -1,5 +1,9 @@
 #pragma once
 
+#include <deque>
+#include <string>
+
+#include "sdkconfig.h"
 #include "window.hpp"
 
 namespace display {

@@ -31,6 +31,11 @@ menu "Display Configuration"
             help
                 Select ILI 9341 based display.
 
+        config DISPLAY_USE_RM68120
+            depends on IDF_TARGET_ESP32
+            bool "RM 68120"
+            help
+                Select RM 68120 based display.
     endchoice # DISPLAY_TYPE
 
     if DISPLAY_USE_SPI

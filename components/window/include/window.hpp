@@ -16,9 +16,9 @@ namespace display {
   protected:
 
     int left   = 0;
-    int right  = CONFIG_DISPLAY_WIDTH;
+    int right  = 0;
     int top    = 0;
-    int bottom = CONFIG_DISPLAY_HEIGHT;
+    int bottom = 0;
   };
 
 }

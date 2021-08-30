@@ -3,7 +3,7 @@
 using namespace display;
 
 void TextWindow::init( void ) {
-  clearLogs();
+  clear_logs();
 }
 
 void TextWindow::clear_logs( void ) {

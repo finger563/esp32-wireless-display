@@ -12,6 +12,7 @@ menu "Wireless Display Example Configuration"
             select DISPLAY_USE_ILI9341
         config ESP_32_S2_HMI_DEVKIT_1
             bool "ESP_32_S2_HMI_DEVKIT_1"
+            select DISPLAY_USE_RM68120
         config CUSTOM_HARDWARE
             bool "CUSTOM_HARDWARE"
     endchoice
