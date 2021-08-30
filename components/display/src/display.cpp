@@ -20,15 +20,15 @@ extern "C" {
 #define MAX(a,b) ((a) > (b) ? a : b)
 #define MIN(a,b) ((a) < (b) ? a : b)
 
-#define LCD_SEL_CMD()   GPIO.out_w1tc = (1 << DISPLAY_DC_PIN) // Low to send command
-#define LCD_SEL_DATA()  GPIO.out_w1ts = (1 << DISPLAY_DC_PIN) // High to send data
-#define LCD_RST_SET()   GPIO.out_w1ts = (1 << DISPLAY_RST_PIN)
-#define LCD_RST_CLR()   GPIO.out_w1tc = (1 << DISPLAY_RST_PIN)
+#define LCD_SEL_CMD()   GPIO.out_w1tc = (1 << CONFIG_DISPLAY_DC_PIN) // Low to send command
+#define LCD_SEL_DATA()  GPIO.out_w1ts = (1 << CONFIG_DISPLAY_DC_PIN) // High to send data
+#define LCD_RST_SET()   GPIO.out_w1ts = (1 << CONFIG_DISPLAY_RST_PIN)
+#define LCD_RST_CLR()   GPIO.out_w1tc = (1 << CONFIG_DISPLAY_RST_PIN)
 
-#define LCD_BKG_ON()    GPIO.out_w1ts = (1 << DISPLAY_BACKLIGHT_PIN) // Backlight ON
-#define LCD_BKG_OFF()   GPIO.out_w1tc = (1 << DISPLAY_BACKLIGHT_PIN) // Backlight OFF
+#define LCD_BKG_ON()    GPIO.out_w1ts = (1 << CONFIG_DISPLAY_BACKLIGHT_PIN) // Backlight ON
+#define LCD_BKG_OFF()   GPIO.out_w1tc = (1 << CONFIG_DISPLAY_BACKLIGHT_PIN) // Backlight OFF
 
-uint8_t  vram[DISPLAY_WIDTH * DISPLAY_HEIGHT];
+uint8_t  vram[CONFIG_DISPLAY_WIDTH * CONFIG_DISPLAY_HEIGHT];
 uint16_t myPalette[256] = {
                            0,8,23,31,256,264,279,287,512,520,535,543,768,776,791,799,1248,1256,1271,1279,1504,
                            1512,1527,1535,1760,1768,1783,1791,2016,2024,2039,2047,8192,8200,8215,8223,8448,8456,
@@ -57,11 +57,11 @@ void Draw_5x8_char(char* _char_matrix,int x_start,int y_start,unsigned char clr)
 
   for (col=0;col<=4;col++) {
     for (row=0;row<=7;row++) {
-      if ((row+y_start)>=0 && (row+y_start)< DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< DISPLAY_WIDTH) {
+      if ((row+y_start)>=0 && (row+y_start)< CONFIG_DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< CONFIG_DISPLAY_WIDTH) {
         if (((_char_matrix[row]>>(7-col))&0x01))
-          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = clr;
+          vram[(row+y_start) + (col+x_start) * CONFIG_DISPLAY_HEIGHT] = clr;
         else
-          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = 0x00;
+          vram[(row+y_start) + (col+x_start) * CONFIG_DISPLAY_HEIGHT] = 0x00;
       }
     }
   }
@@ -79,11 +79,11 @@ void Draw_8x12_char(char* _char_matrix,int x_start,int y_start,unsigned char clr
   int col;
   for (row=0;row<12;row++) {
     for (col=0;col<8;col++) {
-      if ((row+y_start)>=0 && (row+y_start)< DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< DISPLAY_WIDTH) {
+      if ((row+y_start)>=0 && (row+y_start)< CONFIG_DISPLAY_HEIGHT && (col+x_start)>=0 && (col+x_start)< CONFIG_DISPLAY_WIDTH) {
         if (((_char_matrix[row]>>(7-col))&0x01))
-          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = clr;
+          vram[(row+y_start) + (col+x_start) * CONFIG_DISPLAY_HEIGHT] = clr;
         else
-          vram[(row+y_start) + (col+x_start) * DISPLAY_HEIGHT] = 0x00;
+          vram[(row+y_start) + (col+x_start) * CONFIG_DISPLAY_HEIGHT] = 0x00;
       }
     }
   }
@@ -113,13 +113,13 @@ void draw_rectangle(
 		  yBottom = pos.y + height/2;
   for (row=yTop;row<=yBottom;row++) {
     for (col=xLeft;col<=xRight;col++) {
-      if (row>=0 && col>=0 && row<DISPLAY_HEIGHT && col<DISPLAY_WIDTH) {
+      if (row>=0 && col>=0 && row<CONFIG_DISPLAY_HEIGHT && col<CONFIG_DISPLAY_WIDTH) {
         if ( ((col-xLeft)<2) ||
              ((xRight-col)<2) ||
              ((row-yTop)<2) ||
              ((yBottom-row)<2))
-          vram[row + col * DISPLAY_HEIGHT] = outline;
-        else vram[row + col * DISPLAY_HEIGHT] = fill;
+          vram[row + col * CONFIG_DISPLAY_HEIGHT] = outline;
+        else vram[row + col * CONFIG_DISPLAY_HEIGHT] = fill;
       }
     }
   }
@@ -131,23 +131,23 @@ void plot4points(int cx, int cy, int x, int y, unsigned char clroutline,unsigned
   int row,col;
   for (row = cy-y;row<=(cy+y);row++) {
     for (col=cx-x;col<=(cx+x);col++) {
-      if (row>=0 && row< DISPLAY_HEIGHT && col>=0 && col< DISPLAY_WIDTH) vram[row + col * DISPLAY_HEIGHT] = clrfill;
+      if (row>=0 && row< CONFIG_DISPLAY_HEIGHT && col>=0 && col< CONFIG_DISPLAY_WIDTH) vram[row + col * CONFIG_DISPLAY_HEIGHT] = clrfill;
     }
   }
-  if ((cy+y)>=0 && (cy+y)< DISPLAY_HEIGHT && (cx+x)>=0 && (cx+x)< DISPLAY_WIDTH)
-    vram[(cy+y) + (cx+x) * DISPLAY_HEIGHT] = clroutline;
+  if ((cy+y)>=0 && (cy+y)< CONFIG_DISPLAY_HEIGHT && (cx+x)>=0 && (cx+x)< CONFIG_DISPLAY_WIDTH)
+    vram[(cy+y) + (cx+x) * CONFIG_DISPLAY_HEIGHT] = clroutline;
 
   if (x != 0) {
-    if ((cy+y)>=0 && (cy+y)< DISPLAY_HEIGHT && (cx-x)>=0 && (cx-x)< DISPLAY_WIDTH)
-      vram[(cy+y) + (cx-x) * DISPLAY_HEIGHT] = clroutline;
+    if ((cy+y)>=0 && (cy+y)< CONFIG_DISPLAY_HEIGHT && (cx-x)>=0 && (cx-x)< CONFIG_DISPLAY_WIDTH)
+      vram[(cy+y) + (cx-x) * CONFIG_DISPLAY_HEIGHT] = clroutline;
   }
   if (y != 0) {
-    if ((cy-y)>=0 && (cy-y)< DISPLAY_HEIGHT && (cx+x)>=0 && (cx+x)< DISPLAY_WIDTH)
-      vram[(cy-y) + (cx+x) * DISPLAY_HEIGHT] = clroutline;
+    if ((cy-y)>=0 && (cy-y)< CONFIG_DISPLAY_HEIGHT && (cx+x)>=0 && (cx+x)< CONFIG_DISPLAY_WIDTH)
+      vram[(cy-y) + (cx+x) * CONFIG_DISPLAY_HEIGHT] = clroutline;
   }
   if (x != 0 && y != 0) {
-    if ((cy-y)>=0 && (cy-y)< DISPLAY_HEIGHT && (cx-x)>=0 && (cx-x)< DISPLAY_WIDTH)
-      vram[(cy-y) + (cx-x) * DISPLAY_HEIGHT] = clroutline;
+    if ((cy-y)>=0 && (cy-y)< CONFIG_DISPLAY_HEIGHT && (cx-x)>=0 && (cx-x)< CONFIG_DISPLAY_WIDTH)
+      vram[(cy-y) + (cx-x) * CONFIG_DISPLAY_HEIGHT] = clroutline;
   }
 }
 
@@ -228,9 +228,9 @@ void draw_line(
   int col;
 
   for (col = xLeft;col <= xRight;col++) {
-    if (row>=0 && col>=0 && row< DISPLAY_HEIGHT && col< DISPLAY_WIDTH) {
-      if (steep) vram[col + row * DISPLAY_HEIGHT] = color;
-      else       vram[row + col * DISPLAY_HEIGHT] = color;
+    if (row>=0 && col>=0 && row< CONFIG_DISPLAY_HEIGHT && col< CONFIG_DISPLAY_WIDTH) {
+      if (steep) vram[col + row * CONFIG_DISPLAY_HEIGHT] = color;
+      else       vram[row + col * CONFIG_DISPLAY_HEIGHT] = color;
     }
     error = error - dy;
     if (error<0) {
@@ -251,7 +251,7 @@ void ili9341_write_frame(
                          const uint8_t *data);
 
 void clear_vram() {
-  memset(vram, 0, DISPLAY_WIDTH * DISPLAY_HEIGHT);
+  memset(vram, 0, CONFIG_DISPLAY_WIDTH * CONFIG_DISPLAY_HEIGHT);
 }
 
 void clear_vram(
@@ -260,17 +260,17 @@ void clear_vram(
                 const uint16_t width,
                 const uint16_t height) {
   int xs = MAX(0, x),
-    xe = MIN(DISPLAY_WIDTH, xs + width),
+    xe = MIN(CONFIG_DISPLAY_WIDTH, xs + width),
     ys = MAX(0, y),
-    ye = MIN(DISPLAY_HEIGHT, ys + height),
+    ye = MIN(CONFIG_DISPLAY_HEIGHT, ys + height),
     len = ye - ys;
   for (int i=xs; i<xe; i++) {
-    memset( &vram[ ys + i * DISPLAY_HEIGHT ], 0, len );
+    memset( &vram[ ys + i * CONFIG_DISPLAY_HEIGHT ], 0, len );
   }
 }
 
 void display_vram() {
-  ili9341_write_frame(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT, (const uint8_t *)vram);
+  ili9341_write_frame(0, 0, CONFIG_DISPLAY_WIDTH, CONFIG_DISPLAY_HEIGHT, (const uint8_t *)vram);
 }
 
 void blit_vram(const uint16_t xs, const uint16_t ys, const uint16_t width, const uint16_t height) {
@@ -279,7 +279,7 @@ void blit_vram(const uint16_t xs, const uint16_t ys, const uint16_t width, const
   uint16_t x1, y1;
   uint32_t xv, yv, dc;
   uint32_t temp[16];
-  dc = (1 << DISPLAY_DC_PIN);
+  dc = (1 << CONFIG_DISPLAY_DC_PIN);
 
   for (y=0; y<height; y++) {
     //start line
@@ -288,59 +288,59 @@ void blit_vram(const uint16_t xs, const uint16_t ys, const uint16_t width, const
     xv = U16x2toU32(xs,x1);
     yv = U16x2toU32((ys+y),y1);
 
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1tc = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), 0x2A);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), 0x2A);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1ts = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), xv);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), xv);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1tc = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), 0x2B);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), 0x2B);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1ts = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), yv);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), yv);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1tc = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), 0x2C);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), 0x2C);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
 
     x = 0;
     GPIO.out_w1ts = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 511, SPI_USR_MOSI_DBITLEN_S);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 511, SPI_USR_MOSI_DBITLEN_S);
     while (x<width) {
       for (i=0; i<16; i++) {
-        x1 = myPalette[(unsigned char)(vram[y + x * DISPLAY_HEIGHT])]; x++;
-        y1 = myPalette[(unsigned char)(vram[y + x * DISPLAY_HEIGHT])]; x++;
+        x1 = myPalette[(unsigned char)(vram[y + x * CONFIG_DISPLAY_HEIGHT])]; x++;
+        y1 = myPalette[(unsigned char)(vram[y + x * CONFIG_DISPLAY_HEIGHT])]; x++;
         temp[i] = U16x2toU32(x1,y1);
       }
-      while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+      while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
       for (i=0; i<16; i++) {
-        WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS) + (i << 2)), temp[i]);
+        WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS) + (i << 2)), temp[i]);
       }
-      SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
+      SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
     }
   }
-  while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+  while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
 }
 
 // LOCAL ONLY FUNCTIONS
 
 static void spi_write_byte(const uint8_t data){
-  SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 0x7, SPI_USR_MOSI_DBITLEN_S);
-  WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), data);
-  SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-  while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+  SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 0x7, SPI_USR_MOSI_DBITLEN_S);
+  WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), data);
+  SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+  while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
 }
 
 static void LCD_WriteCommand(const uint8_t cmd)
@@ -528,38 +528,38 @@ static void spi_master_init()
   WRITE_PERI_REG(GPIO_ENABLE_W1TS_REG, BIT19|BIT23|BIT22);
 
   ets_printf("lcd spi signal init\r\n");
-  gpio_matrix_in(DISPLAY_SPI_CIPO_PIN, VSPIQ_IN_IDX,0);
-  gpio_matrix_out(DISPLAY_SPI_COPI_PIN, VSPID_OUT_IDX,0,0);
-  gpio_matrix_out(DISPLAY_SPI_CLK_PIN, VSPICLK_OUT_IDX,0,0);
-  gpio_matrix_out(DISPLAY_SPI_CS_PIN, VSPICS0_OUT_IDX,0,0);
+  gpio_matrix_in(CONFIG_DISPLAY_SPI_CIPO_PIN, VSPIQ_IN_IDX,0);
+  gpio_matrix_out(CONFIG_DISPLAY_SPI_COPI_PIN, VSPID_OUT_IDX,0,0);
+  gpio_matrix_out(CONFIG_DISPLAY_SPI_CLK_PIN, VSPICLK_OUT_IDX,0,0);
+  gpio_matrix_out(CONFIG_DISPLAY_SPI_CS_PIN, VSPICS0_OUT_IDX,0,0);
 #endif
   ets_printf("Hspi config\r\n");
 
-  CLEAR_PERI_REG_MASK(SPI_SLAVE_REG(DISPLAY_SPI_BUS), SPI_TRANS_DONE << 5);
-  SET_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS), SPI_CS_SETUP);
-  CLEAR_PERI_REG_MASK(SPI_PIN_REG(DISPLAY_SPI_BUS), SPI_CK_IDLE_EDGE);
-  CLEAR_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS),  SPI_CK_OUT_EDGE);
-  CLEAR_PERI_REG_MASK(SPI_CTRL_REG(DISPLAY_SPI_BUS), SPI_WR_BIT_ORDER);
-  CLEAR_PERI_REG_MASK(SPI_CTRL_REG(DISPLAY_SPI_BUS), SPI_RD_BIT_ORDER);
-  CLEAR_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS), SPI_DOUTDIN);
-  WRITE_PERI_REG(SPI_USER1_REG(DISPLAY_SPI_BUS), 0);
-  SET_PERI_REG_BITS(SPI_CTRL2_REG(DISPLAY_SPI_BUS), SPI_MISO_DELAY_MODE, 0, SPI_MISO_DELAY_MODE_S);
-  CLEAR_PERI_REG_MASK(SPI_SLAVE_REG(DISPLAY_SPI_BUS), SPI_SLAVE_MODE);
+  CLEAR_PERI_REG_MASK(SPI_SLAVE_REG(CONFIG_DISPLAY_SPI_BUS), SPI_TRANS_DONE << 5);
+  SET_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS), SPI_CS_SETUP);
+  CLEAR_PERI_REG_MASK(SPI_PIN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_CK_IDLE_EDGE);
+  CLEAR_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS),  SPI_CK_OUT_EDGE);
+  CLEAR_PERI_REG_MASK(SPI_CTRL_REG(CONFIG_DISPLAY_SPI_BUS), SPI_WR_BIT_ORDER);
+  CLEAR_PERI_REG_MASK(SPI_CTRL_REG(CONFIG_DISPLAY_SPI_BUS), SPI_RD_BIT_ORDER);
+  CLEAR_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS), SPI_DOUTDIN);
+  WRITE_PERI_REG(SPI_USER1_REG(CONFIG_DISPLAY_SPI_BUS), 0);
+  SET_PERI_REG_BITS(SPI_CTRL2_REG(CONFIG_DISPLAY_SPI_BUS), SPI_MISO_DELAY_MODE, 0, SPI_MISO_DELAY_MODE_S);
+  CLEAR_PERI_REG_MASK(SPI_SLAVE_REG(CONFIG_DISPLAY_SPI_BUS), SPI_SLAVE_MODE);
 
-  WRITE_PERI_REG(SPI_CLOCK_REG(DISPLAY_SPI_BUS), (1 << SPI_CLKCNT_N_S) | (1 << SPI_CLKCNT_L_S));//40MHz
-  //WRITE_PERI_REG(SPI_CLOCK_REG(DISPLAY_SPI_BUS), SPI_CLK_EQU_SYSCLK); // 80Mhz
+  WRITE_PERI_REG(SPI_CLOCK_REG(CONFIG_DISPLAY_SPI_BUS), (1 << SPI_CLKCNT_N_S) | (1 << SPI_CLKCNT_L_S));//40MHz
+  //WRITE_PERI_REG(SPI_CLOCK_REG(CONFIG_DISPLAY_SPI_BUS), SPI_CLK_EQU_SYSCLK); // 80Mhz
 
-  SET_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS), SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_MOSI);
-  SET_PERI_REG_MASK(SPI_CTRL2_REG(DISPLAY_SPI_BUS), ((0x4 & SPI_MISO_DELAY_NUM) << SPI_MISO_DELAY_NUM_S));
-  CLEAR_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS), SPI_USR_COMMAND);
-  SET_PERI_REG_BITS(SPI_USER2_REG(DISPLAY_SPI_BUS), SPI_USR_COMMAND_BITLEN, 0, SPI_USR_COMMAND_BITLEN_S);
-  CLEAR_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS), SPI_USR_ADDR);
-  SET_PERI_REG_BITS(SPI_USER1_REG(DISPLAY_SPI_BUS), SPI_USR_ADDR_BITLEN, 0, SPI_USR_ADDR_BITLEN_S);
-  CLEAR_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS), SPI_USR_MISO);
-  SET_PERI_REG_MASK(SPI_USER_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI);
+  SET_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS), SPI_CS_SETUP | SPI_CS_HOLD | SPI_USR_MOSI);
+  SET_PERI_REG_MASK(SPI_CTRL2_REG(CONFIG_DISPLAY_SPI_BUS), ((0x4 & SPI_MISO_DELAY_NUM) << SPI_MISO_DELAY_NUM_S));
+  CLEAR_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_COMMAND);
+  SET_PERI_REG_BITS(SPI_USER2_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_COMMAND_BITLEN, 0, SPI_USR_COMMAND_BITLEN_S);
+  CLEAR_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_ADDR);
+  SET_PERI_REG_BITS(SPI_USER1_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_ADDR_BITLEN, 0, SPI_USR_ADDR_BITLEN_S);
+  CLEAR_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MISO);
+  SET_PERI_REG_MASK(SPI_USER_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI);
   char i;
   for (i = 0; i < 16; ++i) {
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS) + (i << 2)), 0);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS) + (i << 2)), 0);
   }
 }
 
@@ -569,7 +569,7 @@ void ili9341_write_frame(const uint16_t xs, const uint16_t ys, const uint16_t wi
   uint16_t x1, y1;
   uint32_t xv, yv, dc;
   uint32_t temp[16];
-  dc = (1 << DISPLAY_DC_PIN);
+  dc = (1 << CONFIG_DISPLAY_DC_PIN);
 
   for (y=0; y<height; y++) {
     //start line
@@ -578,36 +578,36 @@ void ili9341_write_frame(const uint16_t xs, const uint16_t ys, const uint16_t wi
     xv = U16x2toU32(xs,x1);
     yv = U16x2toU32((ys+y),y1);
 
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1tc = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), 0x2A);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), 0x2A);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1ts = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), xv);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), xv);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1tc = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), 0x2B);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), 0x2B);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1ts = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), yv);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 31, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), yv);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
     GPIO.out_w1tc = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
-    WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS)), 0x2C);
-    SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
-    while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 7, SPI_USR_MOSI_DBITLEN_S);
+    WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS)), 0x2C);
+    SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
+    while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
 
     x = 0;
     GPIO.out_w1ts = dc;
-    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 511, SPI_USR_MOSI_DBITLEN_S);
+    SET_PERI_REG_BITS(SPI_MOSI_DLEN_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR_MOSI_DBITLEN, 511, SPI_USR_MOSI_DBITLEN_S);
     while (x<width) {
       for (i=0; i<16; i++) {
         if(data == NULL){
@@ -619,14 +619,14 @@ void ili9341_write_frame(const uint16_t xs, const uint16_t ys, const uint16_t wi
         y1 = myPalette[(unsigned char)(data[y + x * height])]; x++;
         temp[i] = U16x2toU32(x1,y1);
       }
-      while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+      while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
       for (i=0; i<16; i++) {
-        WRITE_PERI_REG((SPI_W0_REG(DISPLAY_SPI_BUS) + (i << 2)), temp[i]);
+        WRITE_PERI_REG((SPI_W0_REG(CONFIG_DISPLAY_SPI_BUS) + (i << 2)), temp[i]);
       }
-      SET_PERI_REG_MASK(SPI_CMD_REG(DISPLAY_SPI_BUS), SPI_USR);
+      SET_PERI_REG_MASK(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS), SPI_USR);
     }
   }
-  while (READ_PERI_REG(SPI_CMD_REG(DISPLAY_SPI_BUS))&SPI_USR);
+  while (READ_PERI_REG(SPI_CMD_REG(CONFIG_DISPLAY_SPI_BUS))&SPI_USR);
 }
 
 void ili9341_init()

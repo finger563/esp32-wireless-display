@@ -55,10 +55,13 @@ extern "C" void app_main(void) {
     };
 
   auto uart_task_config = phoenix::Task::Config{.stack_size_bytes=4096};
-  auto uart_config = phoenix::Uart::Config{.uart=UART_NUM_1,
-                                           .pin_config={
+  auto uart_config = phoenix::Uart::Config{.uart=CONFIG_UART_PORT,
+                                           .pin_config={.tx=CONFIG_UART_TX,
+                                                        .rx=CONFIG_UART_RX,
+                                                        .rts=CONFIG_UART_RTS,
+                                                        .cts=CONFIG_UART_CTS,
                                                         },
-                                           .port_config={
+                                           .port_config={.baud_rate=CONFIG_UART_BAUDRATE,
                                                          },
                                            .pattern_config={
                                                             },

@@ -1,37 +1,37 @@
 menu "Display Configuration"
 
-    config CONFIG_DISPLAY_WIDTH
+    config DISPLAY_WIDTH
         int "Display Width (pixels)"
         default 240
         help
             Set to the number of pixels across the width of the display.
 
-    config CONFIG_DISPLAY_HEIGHT
+    config DISPLAY_HEIGHT
         int "Display Height (pixels)"
         default 320
         help
             Set to the number of pixels across the height of the display.
 
-    config CONFIG_DISPLAY_USE_SPI
+    config DISPLAY_USE_SPI
         bool
         default y
 
-    choice CONFIG_DISPLAY_TYPE
+    choice DISPLAY_TYPE
         prompt "Display Type"
-        default CONFIG_DISPLAY_USE_ILI9341
+        default DISPLAY_USE_ILI9341
         help
             Select which kind of Display will be used in the example.
 
-        config CONFIG_DISPLAY_USE_ILI9341
+        config DISPLAY_USE_ILI9341
             depends on IDF_TARGET_ESP32
-            select DISPLAY_USE_ILI9341
             bool "ILI 9341"
             help
                 Select ILI 9341 based display.
 
-    endchoice # CONFIG_DISPLAY_TYPE
+    endchoice # DISPLAY_TYPE
 
-    if CONFIG_DISPLAY_USE_SPI
+    if DISPLAY_USE_SPI
+       menu "SPI Configuration"
         config DISPLAY_SPI_BUS
             int "Display SPI Bus"
             range 0 3
@@ -82,9 +82,11 @@ menu "Display Configuration"
             default 22
             help
                 Set the pin number used by SPI CS.
+      endmenu
     endif # CONFIG_DISPLAY_USE_SPI
 
-    if CONFIG_DISPLAY_USE_ILI9341
+    if DISPLAY_USE_ILI9341
+       menu "ILI9341 Pin Configuration"
         config DISPLAY_DC_PIN
             int "DC GPIO number"
             range 0 42
@@ -105,6 +107,7 @@ menu "Display Configuration"
             default 5
             help
                 Set the pin number used by Display Backlight.
+      endmenu
     endif # CONFIG_DISPLAY_USE_ILI9341
 
 endmenu
