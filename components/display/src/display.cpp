@@ -1,4 +1,5 @@
-#include "Display.hpp"
+#include "display.hpp"
+
 extern "C" {
 #include <string.h>
 #include <stdio.h>
@@ -10,10 +11,9 @@ extern "C" {
 #include "soc/gpio_struct.h"
 #include "soc/io_mux_reg.h"
 #include "soc/spi_reg.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 }
-#include "Fonts.hpp"
+
+#include "fonts.hpp"
 
 #define U16x2toU32(m,l) ((((uint32_t)(l>>8|(l&0xFF)<<8))<<16)|(m>>8|(m&0xFF)<<8))
 
