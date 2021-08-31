@@ -28,7 +28,7 @@ extern "C" {
 #define LCD_BKG_ON()    GPIO.out_w1ts = (1 << CONFIG_DISPLAY_BACKLIGHT_PIN) // Backlight ON
 #define LCD_BKG_OFF()   GPIO.out_w1tc = (1 << CONFIG_DISPLAY_BACKLIGHT_PIN) // Backlight OFF
 
-uint8_t  vram[CONFIG_DISPLAY_WIDTH * CONFIG_DISPLAY_HEIGHT];
+uint8_t  *vram = new uint8_t[CONFIG_DISPLAY_WIDTH * CONFIG_DISPLAY_HEIGHT];
 uint16_t myPalette[256] = {
                            0,8,23,31,256,264,279,287,512,520,535,543,768,776,791,799,1248,1256,1271,1279,1504,
                            1512,1527,1535,1760,1768,1783,1791,2016,2024,2039,2047,8192,8200,8215,8223,8448,8456,

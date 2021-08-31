@@ -7,8 +7,8 @@ typedef struct s_point_s {
   uint16_t y;
 } point_s;
 
-extern uint8_t  vram[];
-extern uint16_t myPalette[];
+// extern uint8_t  vram[];
+// extern uint16_t myPalette[];
 
 // low level screen functions
 void ili9341_init();

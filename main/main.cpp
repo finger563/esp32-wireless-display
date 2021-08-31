@@ -39,12 +39,12 @@ extern "C" void app_main(void) {
    */
   logger.info("Configuring display");
   auto plot_height = CONFIG_DISPLAY_HEIGHT * 2 / 3;
-  //auto wireless_display = WirelessDisplay(0, CONFIG_DISPLAY_WIDTH, plot_height, CONFIG_DISPLAY_HEIGHT);
+  auto wireless_display = new WirelessDisplay(0, CONFIG_DISPLAY_WIDTH, plot_height, CONFIG_DISPLAY_HEIGHT);
   auto display_task_callback =
-    [/* &wireless_display */](void) -> void
+    [&wireless_display](void) -> void
     {
       // simply call the wireless display update function
-      // wireless_display.update();
+      wireless_display->update();
       // and sleep for some amount of time
       std::this_thread::sleep_for(10ms);
     };
@@ -61,12 +61,12 @@ extern "C" void app_main(void) {
    */
   logger.info("Configuring udp_server");
   auto on_udp_server_receive_data =
-    [/* &wireless_display */](const std::string& message, const phoenix::SocketUtils::SenderInfo& sender_info) ->
+    [&wireless_display](const std::string& message, const phoenix::SocketUtils::SenderInfo& sender_info) ->
     std::optional<std::string>
     {
      // we received a message, let the display manager know and handle
      // it
-     // wireless_display.push_data(message);
+     wireless_display->push_data(message);
      // return a string if we want to respond to the sender, else return {}
      return {};
     };
@@ -86,11 +86,11 @@ extern "C" void app_main(void) {
    */
   logger.info("Configuring UART");
   auto on_uart_receive_data =
-    [/* &wireless_display */](const std::string& message) -> std::optional<std::string>
+    [&wireless_display](const std::string& message) -> std::optional<std::string>
     {
      // we received a message, let the display manager know and handle
      // it
-     // wireless_display.push_data(message);
+     wireless_display->push_data(message);
      // return a string if we want to respond to the sender, else return {}
      return {};
     };
