@@ -25,7 +25,6 @@ public:
     // initialize the display hardware
     ili9341_init();
     clear_vram();
-    display_vram();
   }
 
   void push_data(const std::string& data) {
@@ -110,11 +109,14 @@ public:
       }
     }
     if (hasNewPlotData) {
+      log_display.clear();
       log_display.draw_logs();
-      display_vram();
     }
     if (hasNewTextData) {
+      plot_display.clear();
       plot_display.draw_plots();
+    }
+    if (hasNewPlotData || hasNewTextData) {
       display_vram();
     }
     return hasNewPlotData || hasNewTextData;
