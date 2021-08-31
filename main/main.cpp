@@ -14,11 +14,18 @@ using namespace std::chrono_literals;
 extern "C" void app_main(void) {
   phoenix::ConsoleLogger logger;
 
+  logger.info("Connecting to wifi");
+
   // Initialize NVS, then connect to SSID
   auto wifiman = phoenix::WifiConnectionManager({
                                                  .ssid = CONFIG_ESP_WIFI_SSID,
                                                  .password = CONFIG_ESP_WIFI_PASSWORD
     });
+
+  while (!wifiman.is_connected()) {
+    logger.info("Waiting for wifi to connect...");
+    std::this_thread::sleep_for(500ms);
+  }
 
   // Network Info
   const auto ip_address = phoenix::WifiConnectionManager::ip_address;
@@ -30,17 +37,19 @@ extern "C" void app_main(void) {
    * plot_display to be 2/3 the height of the screen, and the
    * text_display to be the remaining 1/3 of the screen.
    */
+  logger.info("Configuring display");
   auto plot_height = CONFIG_DISPLAY_HEIGHT * 2 / 3;
-  auto wireless_display = WirelessDisplay(0, CONFIG_DISPLAY_WIDTH, plot_height, CONFIG_DISPLAY_HEIGHT);
+  //auto wireless_display = WirelessDisplay(0, CONFIG_DISPLAY_WIDTH, plot_height, CONFIG_DISPLAY_HEIGHT);
   auto display_task_callback =
-    [&wireless_display](void) -> void
+  //[&wireless_display](void) -> void
+    [](void) -> void
     {
       // simply call the wireless display update function
-      wireless_display.update();
+      // wireless_display.update();
       // and sleep for some amount of time
       std::this_thread::sleep_for(10ms);
     };
-  auto display_task_config = phoenix::Task::Config{.stack_size_bytes=4096,
+  auto display_task_config = phoenix::Task::Config{.stack_size_bytes=8192,
                                                    .on_task_callback=display_task_callback};
   auto display_task = phoenix::Task::make_unique();
   bool task_started = display_task->start(display_task_config);
@@ -51,19 +60,20 @@ extern "C" void app_main(void) {
   /**
    * UDP Server Receive Data
    */
+  logger.info("Configuring udp_server");
   auto on_udp_server_receive_data =
-    [&wireless_display](const std::string& message, const phoenix::SocketUtils::SenderInfo& sender_info) ->
+    [](const std::string& message, const phoenix::SocketUtils::SenderInfo& sender_info) ->
     std::optional<std::string>
     {
      // we received a message, let the display manager know and handle
      // it
-     wireless_display.push_data(message);
+     // wireless_display.push_data(message);
      // return a string if we want to respond to the sender, else return {}
      return {};
     };
 
   auto server_task_config = phoenix::Task::Config{.stack_size_bytes=4096};
-  auto server_config = phoenix::UdpServer::Config{.port=0,
+  auto server_config = phoenix::UdpServer::Config{.port=CONFIG_UDP_SERVER_PORT,
                                                   .is_multicast_endpoint=false,
                                                   .on_receive_callback=on_udp_server_receive_data};
   auto server = phoenix::UdpServer::make_unique();
@@ -75,12 +85,13 @@ extern "C" void app_main(void) {
   /**
    * UART Receive Data
    */
+  logger.info("Configuring UART");
   auto on_uart_receive_data =
-    [&wireless_display](const std::string& message) -> std::optional<std::string>
+    [](const std::string& message) -> std::optional<std::string>
     {
      // we received a message, let the display manager know and handle
      // it
-     wireless_display.push_data(message);
+     // wireless_display.push_data(message);
      // return a string if we want to respond to the sender, else return {}
      return {};
     };

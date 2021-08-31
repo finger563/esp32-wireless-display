@@ -22,7 +22,7 @@ menu "Wireless Display Example Configuration"
         range 0 2 if IDF_TARGET_ESP32
         range 0 1 if IDF_TARGET_ESP32S2
         range 0 1 if IDF_TARGET_ESP32C3
-        default 1 if ESP_32_WROVER_KIT_V4
+        default 0 if ESP_32_WROVER_KIT_V4
         default 1 if ESP_32_S2_HMI_DEVKIT_1
         help
             Set which UART to use for receiving data for display.
