@@ -91,7 +91,7 @@ void Uart::task_function(const Config& config) {
       }
     } else {
       // timeout
-      logger_.info("{}: timeout waiting for bytes", tag_);
+      // logger_.info("{}: timeout waiting for bytes", tag_);
     }
   }
 }

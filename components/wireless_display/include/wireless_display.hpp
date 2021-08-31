@@ -43,7 +43,7 @@ public:
     return data;
   }
 
-  void update() {
+  bool update() {
     bool hasNewPlotData  = false;
     bool hasNewTextData  = false;
 
@@ -117,6 +117,7 @@ public:
       plot_display.draw_plots();
       display_vram();
     }
+    return hasNewPlotData || hasNewTextData;
   }
 
 protected:

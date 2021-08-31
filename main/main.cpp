@@ -41,10 +41,12 @@ extern "C" void app_main(void) {
   auto plot_height = CONFIG_DISPLAY_HEIGHT * 2 / 3;
   auto wireless_display = new WirelessDisplay(0, CONFIG_DISPLAY_WIDTH, plot_height, CONFIG_DISPLAY_HEIGHT);
   auto display_task_callback =
-    [&wireless_display](void) -> void
+    [&wireless_display, &logger](void) -> void
     {
       // simply call the wireless display update function
-      wireless_display->update();
+      if (wireless_display->update()) {
+        logger.info("Wireless Display Task: got new data!");
+      }
       // and sleep for some amount of time
       std::this_thread::sleep_for(10ms);
     };
