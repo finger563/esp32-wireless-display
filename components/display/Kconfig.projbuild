@@ -97,21 +97,27 @@ menu "Display Configuration"
        menu "ILI9341 Pin Configuration"
         config DISPLAY_DC_PIN
             int "DC GPIO number"
-            range 0 42
+            range 0 34 if IDF_TARGET_ESP32
+            range 0 46 if IDF_TARGET_ESP32S2
+            range 0 19 if IDF_TARGET_ESP32C3
             default 21
             help
                 Set the pin number used by Display DC.
 
         config DISPLAY_RST_PIN
             int "RST GPIO number"
-            range 0 42
+            range 0 34 if IDF_TARGET_ESP32
+            range 0 46 if IDF_TARGET_ESP32S2
+            range 0 19 if IDF_TARGET_ESP32C3
             default 18
             help
                 Set the pin number used by Display RST.
 
         config DISPLAY_BACKLIGHT_PIN
             int "Backlight GPIO number"
-            range 0 42
+            range 0 34 if IDF_TARGET_ESP32
+            range 0 46 if IDF_TARGET_ESP32S2
+            range 0 19 if IDF_TARGET_ESP32C3
             default 5
             help
                 Set the pin number used by Display Backlight.
