@@ -32,6 +32,10 @@ extern "C" void app_main(void) {
   const auto netmask = phoenix::WifiConnectionManager::netmask;
   const auto gateway = phoenix::WifiConnectionManager::gateway;
 
+  auto screen = display::Display::make_unique();
+  logger.info("Made a dsplay, now initializing it");
+  screen->init();
+
   /**
    * Display Task for managing the plotting and such. Set the
    * plot_display to be 2/3 the height of the screen, and the
