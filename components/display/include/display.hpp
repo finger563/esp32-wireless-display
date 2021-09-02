@@ -106,9 +106,6 @@ namespace display {
   };
 }
 
-// low level screen functions
-void ili9341_init();
-
 // VRAM functions
 void clear_vram();
 void clear_vram(

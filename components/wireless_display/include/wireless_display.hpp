@@ -23,7 +23,7 @@ public:
     plot_display(left, right, 0, plot_height),
     log_display(left, right, plot_height + 1, display_height) {
     // initialize the display hardware
-    ili9341_init();
+    // ili9341_init();
     clear_vram();
   }
 
