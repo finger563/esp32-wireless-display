@@ -54,8 +54,8 @@ menu "Display Configuration"
         config DISPLAY_SPI_CLOCK_MHZ
             int "SPI clock speed (MHz)"
             range 5 80
-            default 12 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32C3
-            default 12 if IDF_TARGET_ESP32S2
+            default 20 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32C3
+            default 20 if IDF_TARGET_ESP32S2
             help
                 Set the clock speed (MHz) of SPI interface.
 
