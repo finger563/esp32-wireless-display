@@ -7,19 +7,18 @@ void TextWindow::init( void ) {
 }
 
 void TextWindow::clear_logs( void ) {
-  _logs = std::deque<std::string>();
-  _log_colors = std::deque<uint8_t>();
-  // add in empty so that we have blank space & layout things properly
-  for (int i=0; i<max_logs; i++) {
-    _logs.push_back( " " );
-    _log_colors.push_back( 0xFF );
-  }
+  _logs.clear();
+  _log_colors.clear();
 }
 
 void TextWindow::add_log( const std::string& newLog, const uint8_t logColor ) {
   // remove the old and shift to make space
-  _logs.pop_front();
-  _log_colors.pop_front();
+  if (_logs.size() > max_logs) {
+    _logs.pop_front();
+  }
+  if (_log_colors.size() > max_logs) {
+    _log_colors.pop_front();
+  }
   _logs.push_back( newLog );
   _log_colors.push_back( logColor );
 }
@@ -30,11 +29,14 @@ void TextWindow::draw_logs( void ) {
   // iterate from the back (newest) as we print up (bottom->top) of
   // the window, with each log starting on the left of the window
   for (int i=_logs.size() - 1; i>=0; i--) {
-    // if we're out of log space, stop writing logs! (these would be the oldest)
+    // we start drawing at the top of the character, so we need to
+    // decrement the height first
+    y -= log_height;
+    // if we're out of log display space, stop writing logs! (these
+    // would be the oldest)
     if (y <= top) {
       break;
     }
-    y -= log_height;
     // use one of our two fonts depending on the log height specified
     if (log_height < 12) {
       display_.get().draw_5x8_string( (char *)_logs[i].c_str(), _logs[i].length(), x, y, _log_colors[i]);

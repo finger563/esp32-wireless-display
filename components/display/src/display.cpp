@@ -32,6 +32,7 @@ Display::Display(size_t width, size_t height):
   width_(width),
   height_(height)
 {
+  logger_.info("{}: configuring display ({}, {})", tag_, width_, height_);
   logger_.info("{}: allocating VRAM (size = {})", tag_, vram_size());
   vram = (uint8_t*)heap_caps_malloc(vram_size(), MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
   if (vram == nullptr) {
@@ -118,7 +119,7 @@ void Display::init() {
                                             .height=(uint16_t)height_,
                                             .offset_hor=0,
                                             .offset_ver=0,
-                                            .rotate=SCR_DIR_LRTB
+                                            .rotate=SCR_DIR_RLTB
   };
   // find the right driver for the screen based on the controller
   // we are talking to
@@ -160,13 +161,13 @@ void Display::update() {
 // TEXT FUNCTIONS:
 void Display::draw_5x8_char(char* _char_matrix,int x_start,int y_start,unsigned char clr)
 {
-  for (int col=0;col<=4;col++) {
-    for (int row=0;row<=7;row++) {
+  for (int row=0;row<=7;row++) {
+    for (int col=0;col<=4;col++) {
       if ((row+y_start)>=0 && (row+y_start)< height_ && (col+x_start)>=0 && (col+x_start)< width_) {
         if (((_char_matrix[row]>>(7-col))&0x01))
-          vram[(row+y_start) + (col+x_start) * height_] = clr;
+          vram[(row+y_start) * width_ + (col+x_start)] = clr;
         else
-          vram[(row+y_start) + (col+x_start) * height_] = 0x00;
+          vram[(row+y_start) * width_ + (col+x_start)] = 0x00;
       }
     }
   }
@@ -185,9 +186,9 @@ void Display::draw_8x12_char(char* _char_matrix,int x_start,int y_start,unsigned
     for (int col=0;col<8;col++) {
       if ((row+y_start)>=0 && (row+y_start)< height_ && (col+x_start)>=0 && (col+x_start)< width_) {
         if (((_char_matrix[row]>>(7-col))&0x01))
-          vram[(row+y_start) + (col+x_start) * height_] = clr;
+          vram[(row+y_start) * width_ + (col+x_start)] = clr;
         else
-          vram[(row+y_start) + (col+x_start) * height_] = 0x00;
+          vram[(row+y_start) * width_ + (col+x_start)] = 0x00;
       }
     }
   }
@@ -219,8 +220,8 @@ void Display::draw_rectangle(
              ((xRight-col)<2) ||
              ((row-yTop)<2) ||
              ((yBottom-row)<2))
-          vram[row + col * height_] = outline;
-        else vram[row + col * height_] = fill;
+          vram[row * height_ + col] = outline;
+        else vram[row * width_ + col] = fill;
       }
     }
   }
@@ -230,23 +231,25 @@ void Display::plot_4_points(int cx, int cy, int x, int y, unsigned char clroutli
 {
   for (int row = cy-y;row<=(cy+y);row++) {
     for (int col=cx-x;col<=(cx+x);col++) {
-      if (row>=0 && row< height_ && col>=0 && col< width_) vram[row + col * height_] = clrfill;
+      if (row>=0 && row < height_ && col>=0 && col < width_) {
+        vram[row * width_ + col] = clrfill;
+      }
     }
   }
   if ((cy+y)>=0 && (cy+y)< height_ && (cx+x)>=0 && (cx+x)< width_)
-    vram[(cy+y) + (cx+x) * height_] = clroutline;
+    vram[(cy+y) * width_ + (cx+x)] = clroutline;
 
   if (x != 0) {
     if ((cy+y)>=0 && (cy+y)< height_ && (cx-x)>=0 && (cx-x)< width_)
-      vram[(cy+y) + (cx-x) * height_] = clroutline;
+      vram[(cy+y) * width_ + (cx-x)] = clroutline;
   }
   if (y != 0) {
     if ((cy-y)>=0 && (cy-y)< height_ && (cx+x)>=0 && (cx+x)< width_)
-      vram[(cy-y) + (cx+x) * height_] = clroutline;
+      vram[(cy-y) * width_ + (cx+x)] = clroutline;
   }
   if (x != 0 && y != 0) {
     if ((cy-y)>=0 && (cy-y)< height_ && (cx-x)>=0 && (cx-x)< width_)
-      vram[(cy-y) + (cx-x) * height_] = clroutline;
+      vram[(cy-y) * width_ + (cx-x)] = clroutline;
   }
 }
 
@@ -262,21 +265,19 @@ void Display::circle(int cx, int cy, int radius, unsigned char clroutline, unsig
   int x = radius;
   int y = 0;
 
-  while (x > y)
-    {
-      plot_8_points(cx, cy, x, y,clroutline,clrfill);
+  while (x > y) {
+    plot_8_points(cx, cy, x, y,clroutline,clrfill);
 
-      error += y;
-      ++y;
-      error += y;
+    error += y;
+    ++y;
+    error += y;
 
-      if (error >= 0)
-        {
-          --x;
-          error -= x;
-          error -= x;
-        }
+    if (error >= 0) {
+      --x;
+      error -= x;
+      error -= x;
     }
+  }
   plot_4_points(cx, cy, x, y,clroutline,clrfill);
 }
 
@@ -326,8 +327,9 @@ void Display::draw_line(
 
   for (int col = xLeft;col <= xRight;col++) {
     if (row>=0 && col>=0 && row< height_ && col< width_) {
-      if (steep) vram[col + row * height_] = color;
-      else       vram[row + col * height_] = color;
+      // steep means we shoul flip x/y
+      if (steep) vram[col * width_ + row] = color;
+      else       vram[row * width_ + col] = color;
     }
     error = error - dy;
     if (error<0) {
@@ -353,8 +355,10 @@ void Display::clear(
     xe = std::min((uint16_t)width_, (uint16_t)(xs + width)),
     ys = std::max((uint16_t)0, y),
     ye = std::min((uint16_t)height_, (uint16_t)(ys + height)),
-    len = ye - ys;
-  for (int i=xs; i<xe; i++) {
-    memset( &vram[ ys + i * height_ ], 0, len );
+    len = xe - xs;
+  // for all the rows in the rectangle
+  for (int row=ys; row<ye; row++) {
+    // set the whole row to 0
+    memset( &vram[ row * width_ + xs], 0, len );
   }
 }
