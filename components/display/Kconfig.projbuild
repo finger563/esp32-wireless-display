@@ -28,12 +28,16 @@ menu "Display Configuration"
         config DISPLAY_USE_ILI9341
             depends on IDF_TARGET_ESP32
             bool "ILI 9341"
+            select LCD_DRIVER_SCREEN_CONTROLLER_ILI9341
+            select CONFIG_LCD_DRIVER_SCREEN_CONTROLLER_ILI9341
             help
                 Select ILI 9341 based display.
 
         config DISPLAY_USE_RM68120
             depends on IDF_TARGET_ESP32
             bool "RM 68120"
+            select LCD_DRIVER_SCREEN_CONTROLLER_RM68120
+            select CONFIG_LCD_DRIVER_SCREEN_CONTROLLER_RM68120
             help
                 Select RM 68120 based display.
     endchoice # DISPLAY_TYPE
@@ -91,7 +95,7 @@ menu "Display Configuration"
             help
                 Set the pin number used by SPI CS.
       endmenu
-    endif # CONFIG_DISPLAY_USE_SPI
+    endif # DISPLAY_USE_SPI
 
     if DISPLAY_USE_ILI9341
        menu "ILI9341 Pin Configuration"
@@ -122,6 +126,6 @@ menu "Display Configuration"
             help
                 Set the pin number used by Display Backlight.
       endmenu
-    endif # CONFIG_DISPLAY_USE_ILI9341
+    endif # DISPLAY_USE_ILI9341
 
 endmenu
