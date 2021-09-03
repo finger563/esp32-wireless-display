@@ -135,8 +135,9 @@ void Display::init() {
 }
 
 void Display::update() {
+  logger_.info("{}: blitting VRAM to display", tag_);
   // acquire the interface
-  LCD_IFACE_ACQUIRE();
+  screen_interface_driver_->bus_acquire(spi_bus_);
   esp_err_t status;
   // say where we want to draw (whole window)
   status = screen_driver_.set_window(0, 0, width_ - 1, height_ - 1);
@@ -153,7 +154,7 @@ void Display::update() {
     logger_.error("{}: error writing ram data: {}", tag_, strerror(errno));
   }
   // release the interface
-  LCD_IFACE_RELEASE();
+  screen_interface_driver_->bus_release(spi_bus_);
 }
 
 // TEXT FUNCTIONS:
