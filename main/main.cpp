@@ -27,11 +27,6 @@ extern "C" void app_main(void) {
     std::this_thread::sleep_for(500ms);
   }
 
-  // Network Info
-  const auto ip_address = phoenix::WifiConnectionManager::ip_address;
-  const auto netmask = phoenix::WifiConnectionManager::netmask;
-  const auto gateway = phoenix::WifiConnectionManager::gateway;
-
   /**
    * Display Task for managing the plotting and such. Set the
    * plot_display to be 2/3 the height of the screen, and the
@@ -118,7 +113,18 @@ extern "C" void app_main(void) {
     logger.error("Error: could not start uart!");
   }
 
+  bool have_printed_ip = false;
   while (true) {
     std::this_thread::sleep_for(1s);
+    // Network Info
+    const auto ip_address = phoenix::WifiConnectionManager::ip_address;
+    const auto netmask = phoenix::WifiConnectionManager::netmask;
+    const auto gateway = phoenix::WifiConnectionManager::gateway;
+    // see if we have network info
+    if (!have_printed_ip && ip_address.size() > 0) {
+      // we have not printed, and we now have an IP, so print it!
+      wireless_display->push_data(std::string("IP:") + ip_address + ":" + std::to_string(CONFIG_UDP_SERVER_PORT));
+      have_printed_ip = true;
+    }
   }
 }
