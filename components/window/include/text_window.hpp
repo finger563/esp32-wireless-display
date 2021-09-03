@@ -9,7 +9,9 @@
 namespace display {
   class TextWindow : public Window {
     public:
-    TextWindow( int l, int r, int t, int b ) : Window(l, r, t, b) {}
+
+    // inherit the constructors
+    using Window::Window;
 
     static const int max_logs = CONFIG_WINDOW_MAX_TEXT_LOGS;
     static const int log_height = CONFIG_WINDOW_TEXT_LOG_HEIGHT;

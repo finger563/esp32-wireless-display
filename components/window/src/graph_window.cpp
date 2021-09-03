@@ -28,7 +28,7 @@ void GraphWindow::draw_plot( const Plot* plot ) {
   // draw line from (i-1) -> (i) for all points in the plot, so start
   // at second index (1)
   for (int i=1; i<Plot::max_data_length; i++) {
-    draw_line(
+    display_.get().draw_line(
               { (uint16_t) (left+((i-1)*right)/Plot::max_data_length),
                 (uint16_t) (bottom-((plot->data[i-1] - plot->min)*(bottom-top))/plot->range) },
               { (uint16_t) (left+(i*right)/Plot::max_data_length),

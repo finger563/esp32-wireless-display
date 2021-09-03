@@ -32,10 +32,6 @@ extern "C" void app_main(void) {
   const auto netmask = phoenix::WifiConnectionManager::netmask;
   const auto gateway = phoenix::WifiConnectionManager::gateway;
 
-  auto screen = display::Display::make_unique();
-  logger.info("Made a dsplay, now initializing it");
-  screen->init();
-
   /**
    * Display Task for managing the plotting and such. Set the
    * plot_display to be 2/3 the height of the screen, and the
@@ -43,7 +39,7 @@ extern "C" void app_main(void) {
    */
   logger.info("Configuring display");
   auto plot_height = CONFIG_DISPLAY_HEIGHT * 2 / 3;
-  auto wireless_display = new WirelessDisplay(0, CONFIG_DISPLAY_WIDTH, plot_height, CONFIG_DISPLAY_HEIGHT);
+  auto wireless_display = new WirelessDisplay(CONFIG_DISPLAY_WIDTH, CONFIG_DISPLAY_HEIGHT, plot_height);
   auto display_task_callback =
     [&wireless_display, &logger](void) -> void
     {

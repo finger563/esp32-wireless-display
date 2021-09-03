@@ -1,11 +1,13 @@
 #pragma once
 
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <sstream>
 
 #include "sdkconfig.h"
 
+#include "display.hpp"
 #include "text_window.hpp"
 #include "graph_window.hpp"
 
@@ -19,12 +21,12 @@ public:
   const std::string clearPlotsCommand = "CLEAR PLOTS";
   const std::string clearLogsCommand = "CLEAR LOGS";
 
-  WirelessDisplay(int left, int right, int plot_height, int display_height):
-    plot_display(left, right, 0, plot_height),
-    log_display(left, right, plot_height + 1, display_height) {
-    // initialize the display hardware
-    // ili9341_init();
-    clear_vram();
+  WirelessDisplay(size_t display_width, int display_height, int plot_height):
+    display_(display::Display::make_unique(display_width, display_height)),
+    plot_window_(*display_, 0, display_width, 0, plot_height),
+    log_window_(*display_, 0, display_width, plot_height + 1, display_height) {
+    display_->init();
+    display_->clear();
   }
 
   void push_data(const std::string& data) {
@@ -60,18 +62,18 @@ public:
           std::string plotName;
           command = line.substr(pos + commandDelim.length(), line.length());
           if (command == clearLogsCommand) {
-            log_display.clear_logs();
+            log_window_.clear_logs();
             // make sure we transition to the next state
             hasNewTextData = true;
           }
           else if (command == clearPlotsCommand) {
-            plot_display.clear_plots();
+            plot_window_.clear_plots();
             // make sure we transition to the next state
             hasNewPlotData = true;
           }
           else if ( (pos = line.find(removePlotCommand)) != std::string::npos) {
             plotName = line.substr(pos + removePlotCommand.length(), line.length());
-            plot_display.remove_plot( plotName );
+            plot_window_.remove_plot( plotName );
             // make sure we transition to the next state
             hasNewPlotData = true;
           }
@@ -89,19 +91,19 @@ public:
               value = line.substr(pos, line.length());
               iValue = std::stoi(value);
               // make sure we transition to the next state
-              plot_display.add_data( plotName, iValue );
+              plot_window_.add_data( plotName, iValue );
               hasNewPlotData = true;
             }
             else {
               // couldn't find that, so we just have text data
-              log_display.add_log( line );
+              log_window_.add_log( line );
               // make sure we transition to the next state
               hasNewTextData = true;
             }
           }
           else {
             // couldn't find that, so we just have text data
-            log_display.add_log( line );
+            log_window_.add_log( line );
             // make sure we transition to the next state
             hasNewTextData = true;
           }
@@ -109,22 +111,24 @@ public:
       }
     }
     if (hasNewPlotData) {
-      log_display.clear();
-      log_display.draw_logs();
+      log_window_.clear();
+      log_window_.draw_logs();
     }
     if (hasNewTextData) {
-      plot_display.clear();
-      plot_display.draw_plots();
+      plot_window_.clear();
+      plot_window_.draw_plots();
     }
     if (hasNewPlotData || hasNewTextData) {
-      display_vram();
+      display_->update();
     }
     return hasNewPlotData || hasNewTextData;
   }
 
 protected:
-  display::GraphWindow plot_display;
-  display::TextWindow log_display;
+  std::unique_ptr<display::Display> display_;
+
+  display::GraphWindow plot_window_;
+  display::TextWindow log_window_;
 
   std::queue<std::string> data_queue_;
   std::mutex data_queue_mutex_;

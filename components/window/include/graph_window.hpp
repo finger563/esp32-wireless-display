@@ -11,7 +11,9 @@
 namespace display {
   class GraphWindow : public Window {
     public:
-    GraphWindow( int l, int r, int t, int b ) : Window(l, r, t, b) {}
+
+    // inherit the constructors
+    using Window::Window;
 
     struct Plot {
       static const size_t max_data_length = CONFIG_WINDOW_PLOT_MAX_DATA_LENGTH;

@@ -37,9 +37,9 @@ void TextWindow::draw_logs( void ) {
     y -= log_height;
     // use one of our two fonts depending on the log height specified
     if (log_height < 12) {
-      Draw_5x8_string( (char *)_logs[i].c_str(), _logs[i].length(), x, y, _log_colors[i]);
+      display_.get().draw_5x8_string( (char *)_logs[i].c_str(), _logs[i].length(), x, y, _log_colors[i]);
     } else {
-      Draw_8x12_string( (char *)_logs[i].c_str(), _logs[i].length(), x, y, _log_colors[i]);
+      display_.get().draw_8x12_string( (char *)_logs[i].c_str(), _logs[i].length(), x, y, _log_colors[i]);
     }
   }
 }
