@@ -159,11 +159,6 @@ void clear_vram(
                 const uint16_t width,
                 const uint16_t height);
 void display_vram();
-void blit_vram(
-               const uint16_t x,
-               const uint16_t y,
-               const uint16_t width,
-               const uint16_t height);
 
 // text functions
 void Draw_8x12_char(
