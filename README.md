@@ -1,4 +1,7 @@
 # esp32-wireless-display
+
+⚠️ Update 2023-09-21: Archiving this repository as it is out of date and has been replaced by https://github.com/esp-cpp/wireless-debug-display which provides the same functionality in a much better and more maintainable , portable, and understandable codebase.
+
 ESP32-WROVER-KIT programmed to be a wireless display / debugger / logger for numeric and text data logs
 
 This is an example project for the 
